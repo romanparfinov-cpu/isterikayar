@@ -1,0 +1,133 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Store products with city availability and characteristics",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "rating": { "type": "number" },
+        "isHit": { "type": "boolean" },
+        "isNew": { "type": "boolean" },
+        "cities": { "type": "array", "items": { "type": "string" } },
+        "flavors": { "type": "array", "items": { "type": "string" } },
+        "colors": { "type": "array", "items": { "type": "string" } },
+        "characteristics": { "type": "object" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "description": { "type": "string" },
+        "stock": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "category", "price", "cities", "stock"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer orders",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerTelegram": { "type": "string" },
+        "city": { "type": "string" },
+        "deliveryType": { "type": "string" },
+        "address": { "type": "string" },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "customerName", "customerPhone", "city", "items", "totalAmount", "status", "createdAt"]
+    },
+    "Subscriber": {
+      "title": "Subscriber",
+      "description": "Newsletter subscribers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "city": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "BlogPost": {
+      "title": "BlogPost",
+      "description": "Blog and news posts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "date": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "author": { "type": "string" },
+        "readTime": { "type": "string" }
+      },
+      "required": ["id", "title", "content", "date"]
+    },
+    "AppSetting": {
+      "title": "AppSetting",
+      "description": "Global store settings and banner configs",
+      "type": "object",
+      "properties": {
+        "bannerText": { "type": "string" },
+        "telegramBotToken": { "type": "string" },
+        "telegramChatId": { "type": "string" },
+        "managerPhone": { "type": "string" },
+        "managerTelegram": { "type": "string" },
+        "yookassaShopId": { "type": "string" },
+        "yookassaSecretKey": { "type": "string" }
+      }
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with role",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "isAdmin": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "isAdmin"]
+    }
+  },
+  "firestore": {
+    "collections": {
+      "products": {
+        "entity": "Product",
+        "description": "Catalog products"
+      },
+      "orders": {
+        "entity": "Order",
+        "description": "Orders created by users"
+      },
+      "subscribers": {
+        "entity": "Subscriber",
+        "description": "Email newsletter subscribers"
+      },
+      "blog_posts": {
+        "entity": "BlogPost",
+        "description": "News and blog posts"
+      },
+      "settings": {
+        "entity": "AppSetting",
+        "description": "General application settings"
+      },
+      "users": {
+        "entity": "User",
+        "description": "User profile and role documents"
+      }
+    }
+  }
+}

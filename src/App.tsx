@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   City, 
   ActiveTab, 
-  Category,
   Product, 
   ProductVariant, 
   CartItem, 
@@ -306,10 +305,21 @@ export default function App() {
     try {
       const loggedUser = await loginWithGoogle();
       setUser(loggedUser);
-      showToast(`Добро пожаловать, ${loggedUser.displayName || 'Пользователь'}!`, 'success');
-    } catch (err) {
+      if (loggedUser.isAdmin) {
+        showToast(`Вы вошли как администратор (${loggedUser.displayName || 'Admin'})!`, 'success');
+      } else {
+        showToast(`Добро пожаловать, ${loggedUser.displayName || 'Пользователь'}!`, 'success');
+      }
+    } catch (err: any) {
       console.error(err);
-      showToast('Не удалось войти в аккаунт', 'error');
+      if (err?.code === 'auth/popup-closed-by-user') {
+        return;
+      }
+      if (err?.code === 'auth/popup-blocked') {
+        showToast('Окно входа заблокировано браузером. Разрешите всплывающие окна.', 'error');
+        return;
+      }
+      showToast('Ошибка входа через Google', 'error');
     }
   };
 
@@ -388,18 +398,20 @@ export default function App() {
               <BlogSection posts={blogPosts} />
             ) : (
               <div>
-                {/* Category Navigation Tiles */}
-                <CategoryQuickNav
-                  selectedCategory={activeTab === 'Главная' ? null : (activeTab as Category)}
-                  onSelectCategory={(cat) => {
-                    setActiveTab(cat || 'Главная');
-                  }}
-                />
+                {/* Home Page Category Navigation Tiles (only on Главная) */}
+                {activeTab === 'Главная' && (
+                  <CategoryQuickNav
+                    selectedCategory={null}
+                    onSelectCategory={(cat) => {
+                      if (cat) setActiveTab(cat);
+                    }}
+                  />
+                )}
 
                 {/* Section Header */}
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 sm:gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-white/10">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 pb-4 border-b border-white/10">
                   <div>
-                    <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black uppercase italic tracking-tighter text-white">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase italic tracking-tighter text-white">
                       {activeTab === 'Главная' ? (
                         <>
                           Популярное в <span className="text-[#7c3aed] underline underline-offset-4 decoration-2">{currentCity}</span>
@@ -410,7 +422,7 @@ export default function App() {
                         </>
                       )}
                     </h1>
-                    <span className="text-white/40 text-xs uppercase tracking-widest font-bold mt-1.5 sm:mt-2 block">
+                    <span className="text-white/40 text-xs uppercase tracking-widest font-bold mt-2 block">
                       {displayedProducts.length > 0
                         ? `Показано ${displayedProducts.length} товаров в наличии`
                         : 'В выбранном городе позиции не найдены'}

@@ -16,7 +16,8 @@ import {
   deleteDoc, 
   doc, 
   setDoc,
-  serverTimestamp 
+  serverTimestamp,
+  Firestore
 } from 'firebase/firestore';
 import { 
   getStorage, 
@@ -25,64 +26,64 @@ import {
   getDownloadURL 
 } from 'firebase/storage';
 import { Product, AppUser, Order, AppSettings, BlogPost } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_BLOG_POSTS } from '../data/initialProducts';
+import firebaseAppletConfig from '../../firebase-applet-config.json';
 
-// Placeholder configuration specified in requirements
+// Configuration supporting both auto-provisioned config and custom Vercel environment variables
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "ВАШ_API_KEY",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "ВАШ_AUTH_DOMAIN",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "ВАШ_PROJECT_ID",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "ВАШ_STORAGE_BUCKET",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "ВАШ_MESSAGING_SENDER_ID",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "ВАШ_APP_ID"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseAppletConfig as any).firestoreDatabaseId || '(default)'
 };
 
 export const ADMIN_EMAIL = 'romanparfinov@gmail.com';
+
 const STORAGE_PRODUCTS_KEY = 'isterika_products_v2';
 const STORAGE_SUBSCRIBERS_KEY = 'isterika_subscribers_v1';
 const STORAGE_ORDERS_KEY = 'isterika_orders_v1';
 const STORAGE_SETTINGS_KEY = 'isterika_settings_v1';
 const STORAGE_BLOGS_KEY = 'isterika_blogs_v1';
 
-const DEFAULT_SETTINGS = {
+const DEFAULT_SETTINGS: AppSettings = {
   telegramUsername: 'ISTERTELEGRAM'
 };
 
-// Determine if real firebase credentials are provided
-const isRealConfig = 
-  firebaseConfig.apiKey && 
-  !firebaseConfig.apiKey.includes('ВАШ_') && 
-  firebaseConfig.projectId && 
-  !firebaseConfig.projectId.includes('ВАШ_');
-
+// Initialize Firebase
 let app: any = null;
 let auth: any = null;
-let db: any = null;
+let db: Firestore | null = null;
 let storage: any = null;
-let googleProvider: any = null;
+let googleProvider: GoogleAuthProvider | null = null;
 
-if (isRealConfig) {
-  try {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    googleProvider = new GoogleAuthProvider();
-  } catch (err) {
-    console.warn('Firebase initialization error, using local fallback:', err);
-  }
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  auth = getAuth(app);
+  
+  const customDbId = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
+    ? firebaseConfig.firestoreDatabaseId
+    : undefined;
+  
+  db = customDbId ? getFirestore(app, customDbId) : getFirestore(app);
+  storage = getStorage(app);
+  googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
+} catch (err) {
+  console.warn('Firebase initialization note:', err);
 }
 
-// LocalStorage helpers for fallback
+// LocalStorage helpers for fast offline caching / fallback
 export function getLocalProducts(): Product[] {
   try {
     const raw = localStorage.getItem(STORAGE_PRODUCTS_KEY);
-    if (!raw) {
-      return [];
-    }
+    if (!raw) return INITIAL_PRODUCTS;
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_PRODUCTS;
   } catch {
-    return [];
+    return INITIAL_PRODUCTS;
   }
 }
 
@@ -94,19 +95,23 @@ export function saveLocalProducts(products: Product[]): void {
   }
 }
 
-// Products API
+// Products API (Real Firestore)
 export async function fetchProducts(): Promise<Product[]> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       const colRef = collection(db, 'products');
       const snap = await getDocs(colRef);
       if (snap.empty) {
-        // Seed demo products to Firestore if empty
-        const initial = getLocalProducts();
-        for (const p of initial) {
-          await setDoc(doc(db, 'products', p.id), p);
+        // Seed initial products to cloud Firestore
+        for (const p of INITIAL_PRODUCTS) {
+          try {
+            await setDoc(doc(db, 'products', p.id), p);
+          } catch (e) {
+            console.warn('Seeding product failed:', e);
+          }
         }
-        return initial;
+        saveLocalProducts(INITIAL_PRODUCTS);
+        return INITIAL_PRODUCTS;
       }
       const list: Product[] = [];
       snap.forEach((d) => {
@@ -115,7 +120,7 @@ export async function fetchProducts(): Promise<Product[]> {
       saveLocalProducts(list);
       return list;
     } catch (e) {
-      console.warn('Firestore fetch failed, returning localStorage products:', e);
+      console.warn('Firestore fetch failed, returning cached products:', e);
       return getLocalProducts();
     }
   }
@@ -130,7 +135,7 @@ export async function addProductToDB(productData: Omit<Product, 'id'>): Promise<
     createdAt: Date.now()
   };
 
-  if (db && isRealConfig) {
+  if (db) {
     try {
       await setDoc(doc(db, 'products', newId), newProduct);
     } catch (e) {
@@ -145,7 +150,7 @@ export async function addProductToDB(productData: Omit<Product, 'id'>): Promise<
 }
 
 export async function updateProductInDB(product: Product): Promise<void> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       await updateDoc(doc(db, 'products', product.id), { ...product });
     } catch (e) {
@@ -162,7 +167,7 @@ export async function updateProductInDB(product: Product): Promise<void> {
 }
 
 export async function deleteProductFromDB(productId: string): Promise<void> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       await deleteDoc(doc(db, 'products', productId));
     } catch (e) {
@@ -177,7 +182,7 @@ export async function deleteProductFromDB(productId: string): Promise<void> {
 
 // Settings API
 export async function fetchSettings(): Promise<AppSettings> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       const snap = await getDocs(collection(db, 'settings'));
       if (snap.empty) {
@@ -198,7 +203,7 @@ export async function fetchSettings(): Promise<AppSettings> {
 }
 
 export async function updateSettingsInDB(settings: AppSettings): Promise<void> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       await setDoc(doc(db, 'settings', 'global'), settings, { merge: true });
     } catch (e) {
@@ -210,7 +215,7 @@ export async function updateSettingsInDB(settings: AppSettings): Promise<void> {
 
 // Orders API
 export async function fetchOrders(): Promise<Order[]> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       const colRef = collection(db, 'orders');
       const snap = await getDocs(colRef);
@@ -240,7 +245,7 @@ export async function addOrderToDB(order: Omit<Order, 'id' | 'createdAt'>): Prom
     createdAt: Date.now()
   };
 
-  if (db && isRealConfig) {
+  if (db) {
     try {
       await setDoc(doc(db, 'orders', newId), newOrder);
     } catch (e) {
@@ -257,7 +262,7 @@ export async function addOrderToDB(order: Omit<Order, 'id' | 'createdAt'>): Prom
 }
 
 export async function deleteOrderFromDB(orderId: string): Promise<void> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       await deleteDoc(doc(db, 'orders', orderId));
     } catch (e) {
@@ -273,7 +278,7 @@ export async function deleteOrderFromDB(orderId: string): Promise<void> {
 }
 
 export async function updateOrderStatusInDB(orderId: string, status: Order['status']): Promise<void> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       await updateDoc(doc(db, 'orders', orderId), { status });
     } catch (e) {
@@ -291,9 +296,9 @@ export async function updateOrderStatusInDB(orderId: string, status: Order['stat
   } catch {}
 }
 
-// Image upload to Firebase Storage or Base64 / URL fallback
+// Image upload to Firebase Storage or Base64 fallback
 export async function uploadProductImage(file: File): Promise<string> {
-  if (storage && isRealConfig) {
+  if (storage) {
     try {
       const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
       const uploadRes = await uploadBytes(storageRef, file);
@@ -314,7 +319,7 @@ export async function uploadProductImage(file: File): Promise<string> {
 
 // Newsletter subscription
 export async function subscribeEmail(email: string): Promise<void> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
       await addDoc(collection(db, 'subscribers'), {
         email,
@@ -337,85 +342,95 @@ export async function subscribeEmail(email: string): Promise<void> {
   }
 }
 
-// Authentication Helpers
+// Real Google Authentication
 export async function loginWithGoogle(): Promise<AppUser> {
-  if (auth && googleProvider && isRealConfig) {
+  if (!auth || !googleProvider) {
+    throw new Error('Firebase Auth не инициализирован');
+  }
+
+  const result = await signInWithPopup(auth, googleProvider);
+  const fbUser = result.user;
+  const userEmail = (fbUser.email || '').toLowerCase().trim();
+  const isAdmin = userEmail === ADMIN_EMAIL.toLowerCase().trim();
+
+  const appUser: AppUser = {
+    uid: fbUser.uid,
+    email: fbUser.email,
+    displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Пользователь',
+    photoURL: fbUser.photoURL,
+    isAdmin
+  };
+
+  // Sync user profile in Firestore
+  if (db) {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      return {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        isAdmin: (user.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()
-      };
+      await setDoc(doc(db, 'users', fbUser.uid), {
+        uid: fbUser.uid,
+        email: fbUser.email,
+        displayName: appUser.displayName,
+        photoURL: appUser.photoURL,
+        role: isAdmin ? 'admin' : 'user',
+        isAdmin,
+        lastLoginAt: serverTimestamp()
+      }, { merge: true });
     } catch (e) {
-      console.warn('Firebase Google Auth failed, offering simulated sign-in for preview:', e);
+      console.warn('Could not save user profile to firestore:', e);
     }
   }
 
-  // Simulated Admin / User login when Firebase config is a placeholder
-  const mockAdminUser: AppUser = {
-    uid: 'admin-simulated-id',
-    email: ADMIN_EMAIL,
-    displayName: 'Роман Парфинов (Admin)',
-    photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
-    isAdmin: true
-  };
-  localStorage.setItem('isterika_auth_user', JSON.stringify(mockAdminUser));
-  return mockAdminUser;
+  return appUser;
 }
 
 export async function logoutUser(): Promise<void> {
-  if (auth && isRealConfig) {
+  if (auth) {
     try {
       await fbSignOut(auth);
     } catch (e) {
       console.warn('Firebase signOut failed:', e);
     }
   }
-  localStorage.removeItem('isterika_auth_user');
 }
 
 export function subscribeToAuthState(callback: (user: AppUser | null) => void): () => void {
-  if (auth && isRealConfig) {
-    return onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
-      if (fbUser) {
-        callback({
-          uid: fbUser.uid,
-          email: fbUser.email,
-          displayName: fbUser.displayName,
-          photoURL: fbUser.photoURL,
-          isAdmin: (fbUser.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()
-        });
-      } else {
-        callback(null);
-      }
-    });
+  if (!auth) {
+    callback(null);
+    return () => {};
   }
 
-  // Fallback to localStorage session
-  try {
-    const raw = localStorage.getItem('isterika_auth_user');
-    if (raw) {
-      callback(JSON.parse(raw));
+  return onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
+    if (fbUser) {
+      const userEmail = (fbUser.email || '').toLowerCase().trim();
+      const isAdmin = userEmail === ADMIN_EMAIL.toLowerCase().trim();
+
+      callback({
+        uid: fbUser.uid,
+        email: fbUser.email,
+        displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Пользователь',
+        photoURL: fbUser.photoURL,
+        isAdmin
+      });
     } else {
       callback(null);
     }
-  } catch {
-    callback(null);
-  }
-
-  return () => {};
+  });
 }
 
 // Blog API
 export async function fetchBlogPosts(): Promise<BlogPost[]> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
-      const colRef = collection(db, 'blogs');
+      const colRef = collection(db, 'blog_posts');
       const snap = await getDocs(colRef);
+      if (snap.empty) {
+        for (const post of INITIAL_BLOG_POSTS) {
+          try {
+            await setDoc(doc(db, 'blog_posts', post.id), post);
+          } catch (e) {
+            console.warn('Error seeding blog:', e);
+          }
+        }
+        return INITIAL_BLOG_POSTS;
+      }
       const list: BlogPost[] = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() } as BlogPost));
       return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -428,10 +443,10 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
     const raw = localStorage.getItem(STORAGE_BLOGS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_BLOG_POSTS;
     }
   } catch {}
-  return [];
+  return INITIAL_BLOG_POSTS;
 }
 
 export async function addBlogPostToDB(post: Omit<BlogPost, 'id'>): Promise<BlogPost> {
@@ -441,9 +456,9 @@ export async function addBlogPostToDB(post: Omit<BlogPost, 'id'>): Promise<BlogP
     id: newId
   };
 
-  if (db && isRealConfig) {
+  if (db) {
     try {
-      await setDoc(doc(db, 'blogs', newId), newPost);
+      await setDoc(doc(db, 'blog_posts', newId), newPost);
     } catch (e) {
       console.warn('Firestore addBlogPost failed:', e);
     }
@@ -458,9 +473,9 @@ export async function addBlogPostToDB(post: Omit<BlogPost, 'id'>): Promise<BlogP
 }
 
 export async function updateBlogPostInDB(id: string, post: Partial<BlogPost>): Promise<void> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
-      await updateDoc(doc(db, 'blogs', id), post);
+      await updateDoc(doc(db, 'blog_posts', id), post);
     } catch (e) {
       console.warn('Firestore updateBlogPost failed:', e);
     }
@@ -477,9 +492,9 @@ export async function updateBlogPostInDB(id: string, post: Partial<BlogPost>): P
 }
 
 export async function deleteBlogPostFromDB(id: string): Promise<void> {
-  if (db && isRealConfig) {
+  if (db) {
     try {
-      await deleteDoc(doc(db, 'blogs', id));
+      await deleteDoc(doc(db, 'blog_posts', id));
     } catch (e) {
       console.warn('Firestore deleteBlogPost failed:', e);
     }
