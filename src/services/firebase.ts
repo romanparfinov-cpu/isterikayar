@@ -27,17 +27,18 @@ import {
 } from 'firebase/storage';
 import { Product, AppUser, Order, AppSettings, BlogPost } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_BLOG_POSTS } from '../data/initialProducts';
-import firebaseAppletConfig from '../../firebase-applet-config.json';
 
 // Configuration supporting both auto-provisioned config and custom Vercel environment variables
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseAppletConfig as any).firestoreDatabaseId || '(default)'
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyByOxuteEKwId8W85KLLn_gStv5ObV2zWM",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "isterikaai.firebaseapp.com",
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://isterikaai-default-rtdb.firebaseio.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "isterikaai",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "isterikaai.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "285709727430",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:285709727430:web:05542c9dbc2470d4b309c7",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-9L6R6RMX2G",
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || '(default)'
 };
 
 export const ADMIN_EMAIL = 'romanparfinov@gmail.com';

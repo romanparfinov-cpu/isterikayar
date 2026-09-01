@@ -21,7 +21,8 @@ import {
   deleteBlogPostFromDB,
   loginWithGoogle, 
   logoutUser, 
-  subscribeToAuthState 
+  subscribeToAuthState,
+  getLocalProducts
 } from './services/firebase';
 
 import { Header } from './components/Header';
@@ -114,13 +115,31 @@ export default function App() {
     async function loadData() {
       try {
         setIsLoading(true);
+        
+        // Timeout wrapper to prevent infinite loading if Firebase hangs
+        const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+          return new Promise((resolve) => {
+            const timer = setTimeout(() => resolve(fallback), ms);
+            promise.then((res) => {
+              clearTimeout(timer);
+              resolve(res);
+            }).catch((err) => {
+              clearTimeout(timer);
+              console.error(err);
+              resolve(fallback);
+            });
+          });
+        };
+
         const [data, settings, blogs] = await Promise.all([
-          fetchProducts(),
-          fetchSettings(),
-          fetchBlogPosts()
+          withTimeout(fetchProducts(), 5000, []),
+          withTimeout(fetchSettings(), 5000, { telegramUsername: 'ISTERTELEGRAM' }),
+          withTimeout(fetchBlogPosts(), 5000, [])
         ]);
+
         if (isMounted) {
-          setProducts(data);
+          // If fallback was triggered and returned empty, we can try to load from localStorage directly
+          setProducts(data.length ? data : getLocalProducts());
           setBlogPosts(blogs);
           if (settings && settings.telegramUsername) {
             setTelegramUsername(settings.telegramUsername);
