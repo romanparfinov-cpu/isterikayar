@@ -27,6 +27,7 @@ export interface Product {
   imageUrl: string;
   variants: ProductVariant[];
   characteristics: ProductCharacteristics;
+  stock?: number;
   createdAt?: number;
 }
 

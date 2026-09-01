@@ -17,6 +17,7 @@ import {
   doc, 
   setDoc,
   serverTimestamp,
+  onSnapshot,
   Firestore
 } from 'firebase/firestore';
 import { 
@@ -97,6 +98,44 @@ export function saveLocalProducts(products: Product[]): void {
 }
 
 // Products API (Real Firestore)
+export function subscribeToProducts(callback: (products: Product[]) => void): () => void {
+  if (!db) {
+    callback(getLocalProducts());
+    return () => {};
+  }
+
+  const colRef = collection(db, 'products');
+  const unsubscribe = onSnapshot(colRef, (snap) => {
+    if (snap.empty) {
+      if (INITIAL_PRODUCTS.length > 0) {
+        // Only attempt to seed if INITIAL_PRODUCTS is not empty
+        for (const p of INITIAL_PRODUCTS) {
+          setDoc(doc(db!, 'products', p.id), p).catch(e => console.warn('Seeding product failed:', e));
+        }
+      }
+      saveLocalProducts(INITIAL_PRODUCTS);
+      callback(INITIAL_PRODUCTS);
+      return;
+    }
+
+    const list: Product[] = [];
+    snap.forEach((d) => {
+      list.push({ id: d.id, ...d.data() } as Product);
+    });
+    
+    // Optional: Sort products by createdAt or id to keep order stable
+    list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    saveLocalProducts(list);
+    callback(list);
+  }, (error) => {
+    console.warn('Firestore subscription failed, returning cached products:', error);
+    callback(getLocalProducts());
+  });
+
+  return unsubscribe;
+}
+
 export async function fetchProducts(): Promise<Product[]> {
   if (db) {
     try {

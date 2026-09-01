@@ -148,6 +148,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     <span className="font-bold text-white">{product.characteristics.volume}</span>
                   </div>
                 )}
+                <div>
+                  <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Количество:</span>
+                  <span className="font-bold text-white">{product.stock !== undefined ? product.stock : 0} шт.</span>
+                </div>
               </div>
             </div>
           )}

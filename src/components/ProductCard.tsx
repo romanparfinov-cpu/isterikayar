@@ -85,6 +85,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <p className="text-white/50 text-xs uppercase font-semibold tracking-wider mt-1 truncate">
             {product.category} {product.characteristics.nicotine ? `• ${product.characteristics.nicotine}` : ''}
           </p>
+          <p className="text-white/60 text-xs font-medium mt-1">
+            В наличии: {product.stock !== undefined ? product.stock : 0} шт.
+          </p>
         </div>
 
         {/* Price & Action Button */}

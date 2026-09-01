@@ -39,6 +39,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [category, setCategory] = useState<Category>('Жидкости');
   const [city, setCity] = useState<ProductCity>('Оба');
   const [price, setPrice] = useState<number>(25.00);
+  const [stock, setStock] = useState<number>(0);
   const [imageUrl, setImageUrl] = useState('');
   const [variantsText, setVariantsText] = useState('');
   
@@ -121,6 +122,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setCategory('Жидкости');
     setCity('Оба');
     setPrice(25.00);
+    setStock(0);
     setImageUrl('https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80');
     setVariantsText('Клубника 3мг 30мл 25.00\nЧерника Лед 3мг 30мл 25.00');
     setPower('');
@@ -138,6 +140,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setCategory(prod.category);
     setCity(prod.city);
     setPrice(prod.price);
+    setStock(prod.stock || 0);
     setImageUrl(prod.imageUrl);
 
     // Convert variants array to lines
@@ -245,6 +248,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         category,
         city,
         price: Number(price),
+        stock: Number(stock),
         imageUrl: imageUrl.trim() || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80',
         variants: parsedVariants,
         characteristics,
@@ -474,6 +478,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                           <span className="font-bold text-white">
                             {formatPrice(p.price)}
                           </span>
+                          <span>•</span>
+                          <span className="text-blue-300">
+                            Кол-во: {p.stock !== undefined ? p.stock : 0}
+                          </span>
                         </div>
                       </div>
 
@@ -566,6 +574,21 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     required
                     value={price}
                     onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#7c3aed]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                    Количество (в наличии)
+                  </label>
+                  <input
+                    id="admin-input-stock"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={stock}
+                    onChange={(e) => setStock(parseInt(e.target.value) || 0)}
                     className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#7c3aed]"
                   />
                 </div>

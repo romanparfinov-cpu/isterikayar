@@ -11,6 +11,7 @@ import {
 } from './types';
 import { 
   fetchProducts, 
+  subscribeToProducts,
   fetchSettings,
   fetchBlogPosts,
   addProductToDB, 
@@ -131,15 +132,12 @@ export default function App() {
           });
         };
 
-        const [data, settings, blogs] = await Promise.all([
-          withTimeout(fetchProducts(), 5000, []),
+        const [settings, blogs] = await Promise.all([
           withTimeout(fetchSettings(), 5000, { telegramUsername: 'ISTERTELEGRAM' }),
           withTimeout(fetchBlogPosts(), 5000, [])
         ]);
 
         if (isMounted) {
-          // If fallback was triggered and returned empty, we can try to load from localStorage directly
-          setProducts(data.length ? data : getLocalProducts());
           setBlogPosts(blogs);
           if (settings && settings.telegramUsername) {
             setTelegramUsername(settings.telegramUsername);
@@ -155,13 +153,21 @@ export default function App() {
 
     loadData();
 
-    const unsubscribe = subscribeToAuthState((appUser) => {
+    // Subscribe to products in real-time
+    const unsubscribeProducts = subscribeToProducts((realTimeProducts) => {
+      if (isMounted) {
+        setProducts(realTimeProducts);
+      }
+    });
+
+    const unsubscribeAuth = subscribeToAuthState((appUser) => {
       if (isMounted) setUser(appUser);
     });
 
     return () => {
       isMounted = false;
-      unsubscribe();
+      unsubscribeProducts();
+      unsubscribeAuth();
     };
   }, []);
 
