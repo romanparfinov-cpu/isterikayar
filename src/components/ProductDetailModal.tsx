@@ -20,9 +20,15 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   // Initialize selected variant when product changes or modal opens
   useEffect(() => {
     if (product && product.variants && product.variants.length > 0) {
-      setSelectedVariant(product.variants[0]);
+      // Pick first in-stock variant, or first variant if none in stock
+      const firstAvailable = product.variants.find((v) => (v.stock ?? 0) > 0) || product.variants[0];
+      setSelectedVariant(firstAvailable);
     } else if (product) {
-      setSelectedVariant({ name: 'Стандарт', price: product.price });
+      setSelectedVariant({
+        name: 'Стандарт',
+        price: product.price,
+        stock: product.stock,
+      });
     } else {
       setSelectedVariant(null);
     }
@@ -31,17 +37,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   if (!isOpen || !product) return null;
 
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
+  const currentStock = selectedVariant?.stock !== undefined
+    ? selectedVariant.stock
+    : (product.stock ?? 0);
+  const isCurrentOutOfStock = currentStock <= 0;
 
   const handleAdd = () => {
-    const variantToAdd = selectedVariant || (product.variants?.[0] ?? { name: 'Стандарт', price: product.price });
+    if (isCurrentOutOfStock) return;
+    const variantToAdd = selectedVariant || (product.variants?.[0] ?? { name: 'Стандарт', price: product.price, stock: product.stock });
     onAddToCart(product, variantToAdd);
   };
 
   const handleCloseModal = () => {
-    // Reset selected variant on close
-    if (product.variants && product.variants.length > 0) {
-      setSelectedVariant(product.variants[0]);
-    }
     onClose();
   };
 
@@ -87,20 +94,37 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-5 sm:p-6 space-y-5">
-          {/* Title & Price */}
+          {/* Title & Price & Stock */}
           <div>
             <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mb-2">
               {product.name}
             </h2>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-black text-[#7c3aed] tracking-tight">
-                {formatPrice(currentPrice)}
-              </span>
-              {selectedVariant && (
-                <span className="text-xs font-bold uppercase tracking-wider text-white/50">
-                  ({selectedVariant.name})
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-black text-[#7c3aed] tracking-tight">
+                  {formatPrice(currentPrice)}
                 </span>
-              )}
+                {selectedVariant && (
+                  <span className="text-xs font-bold uppercase tracking-wider text-white/50">
+                    ({selectedVariant.name})
+                  </span>
+                )}
+              </div>
+
+              {/* Stock Status */}
+              <div>
+                {isCurrentOutOfStock ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-950/40 text-red-400 border border-red-800/40 text-xs font-bold uppercase">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    Нет в наличии
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/40 text-emerald-300 border border-emerald-800/40 text-xs font-bold uppercase">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    В наличии: {currentStock} шт.
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -149,8 +173,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </div>
                 )}
                 <div>
-                  <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Количество:</span>
-                  <span className="font-bold text-white">{product.stock !== undefined ? product.stock : 0} шт.</span>
+                  <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Выбранный вкус:</span>
+                  <span className={`font-bold ${isCurrentOutOfStock ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {isCurrentOutOfStock ? '0 шт. (нет)' : `${currentStock} шт.`}
+                  </span>
                 </div>
               </div>
             </div>
@@ -160,11 +186,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           {product.variants && product.variants.length > 0 && (
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-white/60 mb-2.5">
-                Выберите вариант / вкус / цвет:
+                Выберите вкус / вариант:
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
                 {product.variants.map((v, idx) => {
                   const isSelected = selectedVariant?.name === v.name;
+                  const vStock = v.stock !== undefined ? v.stock : 0;
+                  const isOutOfStock = vStock <= 0;
+
                   return (
                     <button
                       key={idx}
@@ -174,11 +203,22 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       className={`flex items-center justify-between p-3 rounded-lg border text-xs font-semibold uppercase tracking-wider transition-all text-left cursor-pointer ${
                         isSelected
                           ? 'bg-[#7c3aed]/20 border-[#7c3aed] text-white shadow-sm ring-1 ring-[#7c3aed]'
+                          : isOutOfStock
+                          ? 'bg-[#181818]/60 border-white/5 text-neutral-500 hover:border-white/10'
                           : 'bg-[#1c1c1c] border-white/10 text-neutral-300 hover:bg-[#252525] hover:border-white/20'
                       }`}
                     >
-                      <span className="truncate mr-2">{v.name}</span>
-                      <span className={`font-black shrink-0 ${isSelected ? 'text-[#a78bfa]' : 'text-white/60'}`}>
+                      <div className="min-w-0 flex-1 mr-2">
+                        <div className="truncate">{v.name}</div>
+                        <div className="text-[10px] mt-0.5 font-normal">
+                          {isOutOfStock ? (
+                            <span className="text-red-400 font-bold">Нет в наличии</span>
+                          ) : (
+                            <span className="text-emerald-400 font-bold">{vStock} шт.</span>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`font-black shrink-0 ${isSelected ? 'text-[#a78bfa]' : isOutOfStock ? 'text-neutral-500' : 'text-white/60'}`}>
                         {formatPrice(v.price)}
                       </span>
                     </button>
@@ -194,10 +234,19 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               id="product-detail-add-to-cart-btn"
               type="button"
               onClick={handleAdd}
-              className="w-full py-4 px-6 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold uppercase tracking-widest text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-[#7c3aed]/30 transition-all active:scale-[0.99] cursor-pointer"
+              disabled={isCurrentOutOfStock}
+              className={`w-full py-4 px-6 rounded-xl font-bold uppercase tracking-widest text-sm sm:text-base flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                isCurrentOutOfStock
+                  ? 'bg-neutral-800 text-neutral-500 border border-neutral-700 cursor-not-allowed'
+                  : 'bg-[#7c3aed] hover:bg-[#6d28d9] text-white shadow-lg shadow-[#7c3aed]/30 active:scale-[0.99]'
+              }`}
             >
-              <span className="material-icons text-xl">add_shopping_cart</span>
-              Добавить в корзину • {formatPrice(currentPrice)}
+              <span className="material-icons text-xl">
+                {isCurrentOutOfStock ? 'block' : 'add_shopping_cart'}
+              </span>
+              {isCurrentOutOfStock
+                ? 'Этот вкус закончился'
+                : `Добавить в корзину • ${formatPrice(currentPrice)}`}
             </button>
           </div>
         </div>

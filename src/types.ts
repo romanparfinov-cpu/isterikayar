@@ -7,6 +7,7 @@ export type ActiveTab = 'Главная' | 'Жидкости' | 'POD-систе�
 export interface ProductVariant {
   name: string;
   price: number;
+  stock?: number;
 }
 
 export interface ProductCharacteristics {

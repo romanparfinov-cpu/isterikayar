@@ -225,11 +225,21 @@ export default function App() {
 
   // Cart Management
   const handleAddToCart = (product: Product, variant: ProductVariant) => {
+    const variantStock = variant.stock !== undefined ? variant.stock : (product.stock ?? 999);
+    if (variantStock <= 0) {
+      showToast(`Вкус «${variant.name}» закончился`, 'error');
+      return;
+    }
+
     const itemId = `${product.id}-${variant.name}`;
 
     setCartItems((prev) => {
       const existing = prev.find((item) => item.id === itemId);
       if (existing) {
+        if (existing.quantity >= variantStock) {
+          showToast(`Достигнуто максимальное доступное количество (${variantStock} шт.)`, 'info');
+          return prev;
+        }
         return prev.map((item) =>
           item.id === itemId
             ? { ...item, quantity: item.quantity + 1 }
@@ -261,7 +271,12 @@ export default function App() {
       return prev
         .map((item) => {
           if (item.id === id) {
+            const maxStock = item.variant.stock !== undefined ? item.variant.stock : 999;
             const newQty = item.quantity + delta;
+            if (delta > 0 && newQty > maxStock) {
+              showToast(`В наличии доступно только ${maxStock} шт.`, 'info');
+              return item;
+            }
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
           return item;

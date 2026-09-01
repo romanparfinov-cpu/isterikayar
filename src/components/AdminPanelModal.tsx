@@ -39,9 +39,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [category, setCategory] = useState<Category>('Жидкости');
   const [city, setCity] = useState<ProductCity>('Оба');
   const [price, setPrice] = useState<number>(25.00);
-  const [stock, setStock] = useState<number>(0);
   const [imageUrl, setImageUrl] = useState('');
-  const [variantsText, setVariantsText] = useState('');
+  const [variantsList, setVariantsList] = useState<Array<{ name: string; price: number; stock: number }>>([
+    { name: 'Клубника 3мг 30мл', price: 25.00, stock: 5 },
+    { name: 'Черника Лед 3мг 30мл', price: 25.00, stock: 5 },
+  ]);
   
   // Form states (Blog)
   const [blogTitle, setBlogTitle] = useState('');
@@ -122,9 +124,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setCategory('Жидкости');
     setCity('Оба');
     setPrice(25.00);
-    setStock(0);
     setImageUrl('https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80');
-    setVariantsText('Клубника 3мг 30мл 25.00\nЧерника Лед 3мг 30мл 25.00');
+    setVariantsList([
+      { name: 'Клубника 3мг 30мл', price: 25.00, stock: 5 },
+      { name: 'Черника Лед 3мг 30мл', price: 25.00, stock: 5 },
+    ]);
     setPower('');
     setResistance('');
     setTankVolume('');
@@ -140,14 +144,26 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setCategory(prod.category);
     setCity(prod.city);
     setPrice(prod.price);
-    setStock(prod.stock || 0);
     setImageUrl(prod.imageUrl);
 
-    // Convert variants array to lines
-    const varLines = (prod.variants || [])
-      .map(v => `${v.name} ${v.price.toFixed(2)}`)
-      .join('\n');
-    setVariantsText(varLines);
+    // Convert variants array to list
+    if (prod.variants && prod.variants.length > 0) {
+      setVariantsList(
+        prod.variants.map((v) => ({
+          name: v.name,
+          price: v.price !== undefined ? v.price : prod.price,
+          stock: v.stock !== undefined ? v.stock : 0,
+        }))
+      );
+    } else {
+      setVariantsList([
+        {
+          name: 'Стандарт',
+          price: prod.price,
+          stock: prod.stock !== undefined ? prod.stock : 0,
+        },
+      ]);
+    }
 
     setPower(prod.characteristics?.power || '');
     setResistance(prod.characteristics?.resistance || '');
@@ -157,6 +173,40 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setVolume(prod.characteristics?.volume || '');
 
     setActiveTab('edit');
+  };
+
+  const handleAddVariantRow = () => {
+    setVariantsList((prev) => [
+      ...prev,
+      {
+        name: '',
+        price: Number(price) || 25.00,
+        stock: 1,
+      },
+    ]);
+  };
+
+  const handleUpdateVariantRow = (
+    index: number,
+    field: 'name' | 'price' | 'stock',
+    value: string | number
+  ) => {
+    setVariantsList((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return updated;
+    });
+  };
+
+  const handleRemoveVariantRow = (index: number) => {
+    if (variantsList.length <= 1) {
+      onShowToast('У товара должен быть хотя бы один вкус или вариант', 'info');
+      return;
+    }
+    setVariantsList((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   const openCreateBlogForm = () => {
@@ -185,8 +235,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
     try {
       setUploadingImage(true);
-      const uploadedUrl紧 = await uploadProductImage(file);
-      setImageUrl(uploadedUrl紧);
+      const uploadedUrl = await uploadProductImage(file);
+      setImageUrl(uploadedUrl);
       onShowToast('Изображение успешно загружено', 'success');
     } catch (err) {
       console.error(err);
@@ -194,33 +244,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     } finally {
       setUploadingImage(false);
     }
-  };
-
-  const parseVariants = (text: string, basePrice: number): ProductVariant[] => {
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length === 0) {
-      return [{ name: 'Стандарт', price: basePrice }];
-    }
-
-    const variants: ProductVariant[] = [];
-    for (const line of lines) {
-      // Find last number in string as price (e.g. "Клубника 20мг 24.50" => name: "Клубника 20мг", price: 24.50)
-      const match = line.match(/^(.*?)(?:\s+([\d.,]+))$/);
-      if (match) {
-        const vName = match[1].trim();
-        const vPrice = parseFloat(match[2].replace(',', '.'));
-        variants.push({
-          name: vName || 'Вариант',
-          price: isNaN(vPrice) ? basePrice : vPrice
-        });
-      } else {
-        variants.push({
-          name: line,
-          price: basePrice
-        });
-      }
-    }
-    return variants.length > 0 ? variants : [{ name: 'Стандарт', price: basePrice }];
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -232,7 +255,17 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
     try {
       setIsSubmitting(true);
-      const parsedVariants = parseVariants(variantsText, Number(price));
+      
+      const cleanedVariants: ProductVariant[] = variantsList.map((v) => ({
+        name: v.name.trim() || 'Стандарт',
+        price: Number(v.price) >= 0 ? Number(v.price) : Number(price),
+        stock: Number(v.stock) >= 0 ? Number(v.stock) : 0,
+      }));
+
+      const totalStock = cleanedVariants.reduce((sum, v) => sum + (v.stock || 0), 0);
+      const lowestPrice = cleanedVariants.length > 0
+        ? Math.min(...cleanedVariants.map((v) => v.price))
+        : Number(price);
 
       const characteristics: ProductCharacteristics = {
         ...(power ? { power } : {}),
@@ -247,12 +280,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         name: name.trim(),
         category,
         city,
-        price: Number(price),
-        stock: Number(stock),
+        price: Number(price) || lowestPrice,
+        stock: totalStock,
         imageUrl: imageUrl.trim() || 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80',
-        variants: parsedVariants,
+        variants: cleanedVariants,
         characteristics,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       };
 
       await onSaveProduct(productPayload, editingId || undefined);
@@ -468,7 +501,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             {p.name}
                           </h4>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-neutral-400">
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-neutral-400">
                           <span className="text-purple-400 font-medium">
                             {p.category}
                           </span>
@@ -479,10 +512,30 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             {formatPrice(p.price)}
                           </span>
                           <span>•</span>
-                          <span className="text-blue-300">
-                            Кол-во: {p.stock !== undefined ? p.stock : 0}
+                          <span className="text-emerald-400 font-bold">
+                            Всего: {p.stock !== undefined ? p.stock : (p.variants?.reduce((s, v) => s + (v.stock || 0), 0) || 0)} шт.
                           </span>
                         </div>
+                        {/* Flavor stock badges */}
+                        {p.variants && p.variants.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {p.variants.map((v, vIdx) => (
+                              <span
+                                key={vIdx}
+                                className={`text-[10px] px-2 py-0.5 rounded border flex items-center gap-1 ${
+                                  (v.stock ?? 0) > 0
+                                    ? 'bg-purple-950/40 border-purple-800/40 text-purple-200'
+                                    : 'bg-red-950/30 border-red-800/30 text-red-300 line-through opacity-70'
+                                }`}
+                              >
+                                <span>{v.name}:</span>
+                                <strong className={(v.stock ?? 0) > 0 ? 'text-white' : 'text-red-400'}>
+                                  {(v.stock ?? 0)} шт.
+                                </strong>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1.5">
@@ -577,21 +630,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#7c3aed]"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
-                    Количество (в наличии)
-                  </label>
-                  <input
-                    id="admin-input-stock"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={stock}
-                    onChange={(e) => setStock(parseInt(e.target.value) || 0)}
-                    className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#7c3aed]"
-                  />
-                </div>
               </div>
 
               {/* Photo Upload & Preview */}
@@ -631,22 +669,114 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 </div>
               </div>
 
-              {/* Variants Textarea */}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                  Варианты (каждый с новой строки в формате: "Название Цена")
-                </label>
-                <p className="text-[11px] text-neutral-500 mb-1.5">
-                  Пример: "Клубника 3мг 30мл 25.50" или "Black 68.00"
-                </p>
-                <textarea
-                  id="admin-textarea-variants"
-                  rows={3}
-                  value={variantsText}
-                  onChange={(e) => setVariantsText(e.target.value)}
-                  placeholder="Вариант 1 25.00&#10;Вариант 2 26.50"
-                  className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg p-3 text-xs font-mono text-white focus:outline-none focus:border-[#7c3aed]"
-                />
+              {/* Flavors / Variants and Stock Table */}
+              <div className="bg-[#141414] p-4 rounded-xl border border-[#242424] space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+                  <div>
+                    <h5 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-icons text-sm text-[#7c3aed]">tune</span>
+                      Вкусы / Варианты и Наличие (шт)
+                    </h5>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      Укажите название каждого вкуса/варианта, цену и точное количество в наличии
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-[#7c3aed]/20 text-purple-300 px-2.5 py-1 rounded-md border border-[#7c3aed]/30 font-medium">
+                      Итого: <strong className="text-white font-bold">{variantsList.reduce((acc, v) => acc + (Number(v.stock) || 0), 0)} шт.</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAddVariantRow}
+                      className="px-2.5 py-1 rounded-md bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <span className="material-icons text-sm">add</span> Добавить вкус
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {variantsList.map((variant, idx) => (
+                    <div
+                      key={idx}
+                      className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 rounded-lg bg-[#1c1c1c] border border-[#2e2e2e]"
+                    >
+                      {/* Name / Flavor */}
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-neutral-400 uppercase font-semibold mb-1 sm:hidden">
+                          Название вкуса / варианта
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={variant.name}
+                          onChange={(e) => handleUpdateVariantRow(idx, 'name', e.target.value)}
+                          placeholder="Например: Клубника-Банан 20мг"
+                          className="w-full bg-[#121212] border border-[#333] rounded-md px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#7c3aed]"
+                        />
+                      </div>
+
+                      {/* Price */}
+                      <div className="w-full sm:w-28">
+                        <label className="block text-[10px] text-neutral-400 uppercase font-semibold mb-1 sm:hidden">
+                          Цена (BYN)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            required
+                            value={variant.price}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'price', parseFloat(e.target.value) || 0)}
+                            placeholder="Цена"
+                            className="w-full bg-[#121212] border border-[#333] rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#7c3aed]"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-neutral-500 font-bold pointer-events-none">
+                            BYN
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Stock */}
+                      <div className="w-full sm:w-28">
+                        <label className="block text-[10px] text-neutral-400 uppercase font-semibold mb-1 sm:hidden">
+                          В наличии (шт)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            required
+                            value={variant.stock}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'stock', parseInt(e.target.value) || 0)}
+                            placeholder="Кол-во"
+                            className={`w-full bg-[#121212] border rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none ${
+                              (variant.stock || 0) === 0
+                                ? 'border-red-800 text-red-300'
+                                : 'border-[#333] focus:border-[#7c3aed]'
+                            }`}
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-neutral-500 font-bold pointer-events-none">
+                            шт
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Delete button */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVariantRow(idx)}
+                        disabled={variantsList.length <= 1}
+                        className="p-1.5 rounded-md hover:bg-red-500/20 text-neutral-400 hover:text-red-400 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-neutral-400 transition-colors cursor-pointer self-end sm:self-center"
+                        title="Удалить вариант"
+                      >
+                        <span className="material-icons text-base">delete</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Category-Specific Characteristics */}

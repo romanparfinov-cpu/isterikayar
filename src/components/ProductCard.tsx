@@ -18,12 +18,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     ? Math.min(...product.variants.map((v) => v.price))
     : product.price;
 
+  const totalStock =
+    product.variants && product.variants.length > 0
+      ? product.variants.reduce((acc, v) => acc + (v.stock ?? 0), 0)
+      : (product.stock ?? 0);
+
+  const isOutOfStock = totalStock <= 0;
+
   const defaultVariant: ProductVariant = product.variants && product.variants.length > 0
-    ? product.variants[0]
-    : { name: 'Стандарт', price: product.price };
+    ? (product.variants.find((v) => (v.stock ?? 0) > 0) || product.variants[0])
+    : { name: 'Стандарт', price: product.price, stock: product.stock };
 
   const handleCardClick = () => {
-    if (hasMultipleVariants) {
+    if (hasMultipleVariants || isOutOfStock) {
       onOpenDetail(product);
     } else {
       onQuickAdd(product, defaultVariant);
@@ -32,7 +39,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (hasMultipleVariants) {
+    if (hasMultipleVariants || isOutOfStock) {
       onOpenDetail(product);
     } else {
       onQuickAdd(product, defaultVariant);
@@ -85,9 +92,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <p className="text-white/50 text-xs uppercase font-semibold tracking-wider mt-1 truncate">
             {product.category} {product.characteristics.nicotine ? `• ${product.characteristics.nicotine}` : ''}
           </p>
-          <p className="text-white/60 text-xs font-medium mt-1">
-            В наличии: {product.stock !== undefined ? product.stock : 0} шт.
-          </p>
+          {isOutOfStock ? (
+            <p className="text-red-400 text-xs font-semibold mt-1 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Нет в наличии
+            </p>
+          ) : (
+            <p className="text-white/60 text-xs font-medium mt-1">
+              В наличии: <span className="text-emerald-400 font-bold">{totalStock} шт.</span>
+              {product.variants && product.variants.length > 1 && (
+                <span className="text-white/40 ml-1">
+                  ({product.variants.length} {product.category === 'Жидкости' ? 'вкус.' : 'вар.'})
+                </span>
+              )}
+            </p>
+          )}
         </div>
 
         {/* Price & Action Button */}
@@ -105,11 +123,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             id={`product-add-btn-${product.id}`}
             type="button"
             onClick={handleButtonClick}
-            title={hasMultipleVariants ? 'Выбрать вариант' : 'Добавить в корзину'}
-            className="bg-white text-black p-2.5 rounded-lg hover:bg-[#7c3aed] hover:text-white transition-colors cursor-pointer flex items-center justify-center active:scale-95 shadow-md"
+            title={
+              isOutOfStock
+                ? 'Нет в наличии'
+                : hasMultipleVariants
+                ? 'Выбрать вариант'
+                : 'Добавить в корзину'
+            }
+            className={`p-2.5 rounded-lg transition-colors cursor-pointer flex items-center justify-center active:scale-95 shadow-md ${
+              isOutOfStock
+                ? 'bg-neutral-800 text-neutral-500 hover:bg-neutral-700 hover:text-white'
+                : 'bg-white text-black hover:bg-[#7c3aed] hover:text-white'
+            }`}
           >
             <span className="material-icons text-xl">
-              {hasMultipleVariants ? 'tune' : 'add'}
+              {isOutOfStock ? 'visibility' : hasMultipleVariants ? 'tune' : 'add'}
             </span>
           </button>
         </div>
