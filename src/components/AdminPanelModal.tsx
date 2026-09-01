@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, Category, ProductCity, ProductVariant, ProductCharacteristics, Order, BlogPost } from '../types';
 import { formatPrice } from '../utils/format';
-import { uploadProductImage, fetchOrders, updateSettingsInDB, updateOrderStatusInDB } from '../services/firebase';
+import { uploadProductImage, fetchOrders, updateSettingsInDB, updateOrderStatusInDB, sendNewsletter } from '../services/firebase';
 
 interface AdminPanelModalProps {
   isOpen: boolean;
@@ -30,7 +30,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onSettingsChange,
   onShowToast,
 }) => {
-  const [activeTab, setActiveTab] = useState<'list' | 'edit' | 'orders' | 'settings' | 'blogs' | 'edit-blog'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'edit' | 'orders' | 'settings' | 'blogs' | 'edit-blog' | 'mailing'>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
 
@@ -57,6 +57,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [pgVg, setPgVg] = useState('50/50');
   const [nicotine, setNicotine] = useState('');
   const [volume, setVolume] = useState('30 мл');
+
+  // Newsletter states
+  const [newsletterSubject, setNewsletterSubject] = useState('');
+  const [newsletterText, setNewsletterText] = useState('');
+  const [isSendingNewsletter, setIsSendingNewsletter] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -112,6 +117,31 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       onShowToast('Ошибка при сохранении настроек', 'error');
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  const handleSendNewsletter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterSubject.trim() || !newsletterText.trim()) {
+      onShowToast('Заполните тему и текст рассылки', 'error');
+      return;
+    }
+    
+    setIsSendingNewsletter(true);
+    try {
+      await sendNewsletter(
+        newsletterSubject.trim(),
+        newsletterText.trim(),
+        newsletterText.trim().replace(/\n/g, '<br>')
+      );
+      onShowToast('Рассылка успешно добавлена в очередь отправки', 'success');
+      setNewsletterSubject('');
+      setNewsletterText('');
+    } catch (e: any) {
+      console.error(e);
+      onShowToast(e.message || 'Ошибка при отправке рассылки', 'error');
+    } finally {
+      setIsSendingNewsletter(false);
     }
   };
 
@@ -426,6 +456,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           >
             <span className="material-icons text-base">settings</span>
             Настройки
+          </button>
+          <button
+            id="admin-tab-mailing-btn"
+            type="button"
+            onClick={() => setActiveTab('mailing')}
+            className={`py-3.5 px-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors cursor-pointer flex items-center gap-2 shrink-0 ${
+              activeTab === 'mailing'
+                ? 'border-[#7c3aed] text-white'
+                : 'border-transparent text-white/50 hover:text-white'
+            }`}
+          >
+            <span className="material-icons text-base">forward_to_inbox</span>
+            Рассылка
           </button>
         </div>
 
@@ -782,10 +825,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       <div className="flex justify-between items-start border-b border-white/5 pb-3">
                         <div>
                           <span className="text-white font-black tracking-tight text-lg uppercase block">
-                            {order.orderNumber}
+                            {order.orderNumber || order.id}
                           </span>
                           <span className="text-xs text-white/40">
-                            {new Date(order.createdAt).toLocaleString()} • {order.city}
+                            {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Неизвестная дата'} • {order.city || 'Город не указан'}
                           </span>
                         </div>
                         <div className="flex gap-2 items-center">
@@ -801,13 +844,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </div>
                       </div>
                       <div className="space-y-2">
-                        {order.items.map((item, idx) => (
+                        {(order.items || []).map((item, idx) => (
                           <div key={idx} className="flex justify-between items-center text-sm">
                             <div className="flex items-center gap-2">
-                              <span className="text-white/60">{item.quantity}x</span>
-                              <span className="text-white">{item.name} <span className="text-[#7c3aed] text-xs">({item.variant.name})</span></span>
+                              <span className="text-white/60">{item.quantity || 1}x</span>
+                              <span className="text-white">{item.name || 'Товар'} <span className="text-[#7c3aed] text-xs">({item.variant?.name || 'Стандарт'})</span></span>
                             </div>
-                            <span className="text-white font-bold">{formatPrice(item.variant.price * item.quantity)}</span>
+                            <span className="text-white font-bold">{formatPrice((item.variant?.price || 0) * (item.quantity || 1))}</span>
                           </div>
                         ))}
                       </div>
@@ -861,6 +904,66 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   Сохранить настройки
                 </button>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'mailing' && (
+            <div className="space-y-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-white/70 border-b border-white/10 pb-2">Рассылка подписчикам</h3>
+              <p className="text-xs text-white/50 bg-[#7c3aed]/10 border border-[#7c3aed]/20 p-3 rounded-xl leading-relaxed">
+                <span className="font-bold text-[#7c3aed]">Инструкция:</span> Чтобы письма реально доходили до получателей, вам нужно установить официальное расширение Firebase <b>«Trigger Email»</b>.
+                <br/><br/>
+                1. Откройте <a href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">консоль Firebase</a> и выберите ваш проект.<br/>
+                2. В левом меню перейдите в раздел <b>Extensions (Расширения)</b>.<br/>
+                3. Найдите и установите <b>Trigger Email from Firestore</b>.<br/>
+                4. В настройках расширения укажите:<br/>
+                &nbsp;&nbsp;&nbsp;&nbsp;• Email document collection: <b>mail</b><br/>
+                &nbsp;&nbsp;&nbsp;&nbsp;• SMTP connection URI: ваш почтовый сервер (например, smtp://your_email:your_password@smtp.gmail.com:465)<br/>
+                5. После настройки, отправленные здесь сообщения будут автоматически пересылаться на email всем подписчикам.
+              </p>
+              
+              <form onSubmit={handleSendNewsletter} className="space-y-4 text-left max-w-2xl">
+                <div>
+                  <label className="block text-xs font-bold text-white/60 mb-1.5 uppercase tracking-wider">
+                    Тема письма *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newsletterSubject}
+                    onChange={(e) => setNewsletterSubject(e.target.value)}
+                    placeholder="Например: Новое поступление жидкостей!"
+                    className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#7c3aed] transition-colors"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-white/60 mb-1.5 uppercase tracking-wider">
+                    Текст письма *
+                  </label>
+                  <textarea
+                    required
+                    rows={6}
+                    value={newsletterText}
+                    onChange={(e) => setNewsletterText(e.target.value)}
+                    placeholder="Введите текст сообщения для рассылки..."
+                    className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#7c3aed] transition-colors resize-y"
+                  ></textarea>
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={isSendingNewsletter}
+                  className="w-full sm:w-auto py-3 px-6 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#7c3aed]/30 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isSendingNewsletter ? (
+                    <span className="material-icons animate-spin text-lg">refresh</span>
+                  ) : (
+                    <span className="material-icons text-lg">send</span>
+                  )}
+                  Отправить рассылку
+                </button>
+              </form>
             </div>
           )}
 

@@ -358,6 +358,33 @@ export async function uploadProductImage(file: File): Promise<string> {
 }
 
 // Newsletter subscription
+export async function sendNewsletter(subject: string, text: string, html: string): Promise<void> {
+  if (db) {
+    // We fetch all subscribers
+    const snap = await getDocs(collection(db, 'subscribers'));
+    const emails: string[] = [];
+    snap.forEach(doc => {
+      if (doc.data().email) emails.push(doc.data().email);
+    });
+
+    if (emails.length === 0) {
+      throw new Error('Нет подписчиков для рассылки');
+    }
+
+    // Creating a document in the 'mail' collection triggers the 'Trigger Email' Firebase Extension
+    await addDoc(collection(db, 'mail'), {
+      to: emails,
+      message: {
+        subject,
+        text,
+        html,
+      }
+    });
+  } else {
+    throw new Error('База данных недоступна');
+  }
+}
+
 export async function subscribeEmail(email: string): Promise<void> {
   if (db) {
     try {
