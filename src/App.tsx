@@ -393,7 +393,7 @@ export default function App() {
   }, [cartItems]);
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white flex flex-col selection:bg-[#7c3aed] selection:text-white">
+    <div className="min-h-screen bg-[#0f0f0f] text-white flex flex-col selection:bg-[#7c3aed] selection:text-white overflow-x-hidden">
       {/* 18+ Age Verification Modal */}
       <AgeVerificationModal
         isOpen={!ageVerified}

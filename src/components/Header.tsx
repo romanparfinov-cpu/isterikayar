@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { City, ActiveTab, AppUser } from '../types';
+import avatarImage from '../assets/images/vape_juice_avatar_1788264405094.jpg';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -59,15 +60,12 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onTabChange('Главная')}
               className="flex items-center gap-3 cursor-pointer group text-left"
             >
-              <div className="w-8 h-8 rounded-lg bg-[#7c3aed] flex items-center justify-center text-white shadow-md shadow-[#7c3aed]/40 group-hover:scale-105 transition-transform">
-                <span className="font-black text-base tracking-tighter">IS</span>
+              <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-[#7c3aed]/20 group-hover:scale-105 transition-transform border border-white/10">
+                <img src={avatarImage} alt="ISTERIKA Logo" className="w-full h-full object-cover" />
               </div>
               <div>
                 <span className="text-2xl font-black tracking-tighter text-[#7c3aed] uppercase block leading-none">
                   ISTERIKA
-                </span>
-                <span className="text-[10px] tracking-widest text-white/50 uppercase font-bold">
-                  Vape Shop
                 </span>
               </div>
             </button>

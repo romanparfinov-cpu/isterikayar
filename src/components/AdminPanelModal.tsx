@@ -38,11 +38,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Category>('Жидкости');
   const [city, setCity] = useState<ProductCity>('Оба');
-  const [price, setPrice] = useState<number>(25.00);
+  const [price, setPrice] = useState<number>(15.00);
   const [imageUrl, setImageUrl] = useState('');
   const [variantsList, setVariantsList] = useState<Array<{ name: string; price: number; stock: number }>>([
-    { name: 'Клубника 3мг 30мл', price: 25.00, stock: 5 },
-    { name: 'Черника Лед 3мг 30мл', price: 25.00, stock: 5 },
+    { name: 'Клубника 3мг 30мл', price: 15.00, stock: 5 },
+    { name: 'Черника Лед 3мг 30мл', price: 15.00, stock: 5 },
   ]);
   
   // Form states (Blog)
@@ -123,11 +123,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setName('');
     setCategory('Жидкости');
     setCity('Оба');
-    setPrice(25.00);
+    setPrice(15.00);
     setImageUrl('https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80');
     setVariantsList([
-      { name: 'Клубника 3мг 30мл', price: 25.00, stock: 5 },
-      { name: 'Черника Лед 3мг 30мл', price: 25.00, stock: 5 },
+      { name: 'Клубника 3мг 30мл', price: 15.00, stock: 5 },
+      { name: 'Черника Лед 3мг 30мл', price: 15.00, stock: 5 },
     ]);
     setPower('');
     setResistance('');
@@ -180,7 +180,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       ...prev,
       {
         name: '',
-        price: Number(price) || 25.00,
+        price: Number(price) || 15.00,
         stock: 1,
       },
     ]);
@@ -392,7 +392,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         </div>
 
         {/* Tab Controls */}
-        <div className="flex border-b border-white/10 bg-[#161616] px-4 sm:px-6 overflow-x-auto whitespace-nowrap hide-scrollbar">
+        <div className="flex flex-wrap gap-x-2 gap-y-1 border-b border-white/10 bg-[#161616] px-4 sm:px-6 py-2">
           <button
             id="admin-tab-list-btn"
             type="button"
@@ -746,11 +746,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         <div className="relative">
                           <input
                             type="number"
-                            min="0"
+                            min="1"
                             step="1"
                             required
                             value={variant.stock}
-                            onChange={(e) => handleUpdateVariantRow(idx, 'stock', parseInt(e.target.value) || 0)}
+                            onChange={(e) => handleUpdateVariantRow(idx, 'stock', parseInt(e.target.value) || 1)}
                             placeholder="Кол-во"
                             className={`w-full bg-[#121212] border rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none ${
                               (variant.stock || 0) === 0
