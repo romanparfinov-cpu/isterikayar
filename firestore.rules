@@ -33,18 +33,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Subscribers: anyone can create/subscribe, admin can read/manage
-    match /subscribers/{subscriberId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    // Mail collection for triggering emails
-    match /mail/{mailId} {
-      allow create: if isAdmin();
-      allow read: if isAdmin();
-    }
-
     // Orders: anyone can create, authenticated users can read their own orders, admin can read/manage all
     match /orders/{orderId} {
       allow create: if true;
