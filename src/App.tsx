@@ -315,7 +315,10 @@ export default function App() {
       setProducts((prev) => prev.map((p) => (p.id === id ? updatedProduct : p)));
     } else {
       const added = await addProductToDB(productData);
-      setProducts((prev) => [added, ...prev]);
+      setProducts((prev) => {
+        if (prev.some((p) => p.id === added.id)) return prev;
+        return [added, ...prev];
+      });
     }
   };
 
@@ -331,7 +334,10 @@ export default function App() {
       setBlogPosts((prev) => prev.map((p) => (p.id === id ? updatedPost : p)));
     } else {
       const added = await addBlogPostToDB(postData);
-      setBlogPosts((prev) => [added, ...prev]);
+      setBlogPosts((prev) => {
+        if (prev.some((p) => p.id === added.id)) return prev;
+        return [added, ...prev];
+      });
     }
   };
 
