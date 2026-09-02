@@ -198,7 +198,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <label className="block text-xs font-bold uppercase tracking-widest text-white/60 mb-2.5">
                 Выберите вкус / вариант:
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-3 custom-scrollbar">
                 {product.variants.map((v, idx) => {
                   const isSelected = selectedVariant?.name === v.name;
                   const vStock = v.stock !== undefined ? v.stock : 0;
