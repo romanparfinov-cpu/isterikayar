@@ -13,7 +13,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onOpenDetail,
   onQuickAdd,
 }) => {
-  const hasMultipleVariants = product.variants && product.variants.length > 1;
+  const hasVariants = product.variants && product.variants.length > 0;
+
   const lowestPrice = product.variants && product.variants.length > 0
     ? Math.min(...product.variants.map((v) => v.price))
     : product.price;
@@ -30,7 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     : { name: 'Стандарт', price: product.price, stock: product.stock };
 
   const handleCardClick = () => {
-    if (hasMultipleVariants || isOutOfStock) {
+    if (hasVariants || isOutOfStock) {
       onOpenDetail(product);
     } else {
       onQuickAdd(product, defaultVariant);
@@ -39,7 +40,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (hasMultipleVariants || isOutOfStock) {
+    if (hasVariants || isOutOfStock) {
       onOpenDetail(product);
     } else {
       onQuickAdd(product, defaultVariant);
@@ -95,9 +96,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <h3 className="font-bold text-base sm:text-lg text-white leading-snug group-hover:text-purple-300 transition-colors line-clamp-2">
             {product.name}
           </h3>
-          <p className="text-white/50 text-xs uppercase font-semibold tracking-wider mt-1 truncate">
-            {product.category} {product.characteristics.nicotine ? `• ${product.characteristics.nicotine}` : ''}
-          </p>
+          {product.characteristics.nicotine && (
+            <p className="text-white/50 text-xs uppercase font-semibold tracking-wider mt-1 truncate">
+              {product.characteristics.nicotine}
+            </p>
+          )}
           {isOutOfStock ? (
             <p className="text-red-400 text-xs font-semibold mt-1 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Нет в наличии
@@ -105,7 +108,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           ) : (
             <p className="text-white/60 text-xs font-medium mt-1">
               В наличии: <span className="text-emerald-400 font-bold">{totalStock} шт.</span>
-              {product.variants && product.variants.length > 1 && (
+              {product.variants && product.variants.length > 0 && (
                 <span className="text-white/40 ml-1">
                   ({product.variants.length} {product.category === 'Жидкости' ? 'вкус.' : 'вар.'})
                 </span>
@@ -118,13 +121,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/10">
           <div>
             <span className="text-white/40 text-[10px] uppercase font-bold tracking-wider block">
-              {hasMultipleVariants ? 'от' : 'цена'}
+              цена
             </span>
             <span className="text-[#7c3aed] font-black text-lg sm:text-xl tracking-tight">
               {formatPrice(lowestPrice)}
             </span>
           </div>
-
           <button
             id={`product-add-btn-${product.id}`}
             type="button"
@@ -132,7 +134,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             title={
               isOutOfStock
                 ? 'Нет в наличии'
-                : hasMultipleVariants
+                : hasVariants
                 ? 'Выбрать вариант'
                 : 'Добавить в корзину'
             }
@@ -143,7 +145,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             }`}
           >
             <span className="material-icons text-xl">
-              {isOutOfStock ? 'visibility' : hasMultipleVariants ? 'tune' : 'add'}
+              {isOutOfStock ? 'visibility' : 'add_shopping_cart'}
             </span>
           </button>
         </div>

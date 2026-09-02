@@ -54,8 +54,8 @@ export const CartModal: React.FC<CartModalProps> = ({
 
     const { url } = createTelegramOrderUrl(orderNumber, city, orderItems, totalSum, telegramUsername);
 
-    // Open Telegram link in new tab
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Navigate in current window to ensure Telegram deep links work in Safari without popup blockers
+    window.location.href = url;
 
     // Notify parent to show "Заказ отправлен! Корзина очищена" notification modal & clear cart
     onOrderCompleted(orderNumber);

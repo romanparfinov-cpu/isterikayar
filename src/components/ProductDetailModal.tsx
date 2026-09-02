@@ -75,7 +75,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </button>
 
         {/* Large Image on Top */}
-        <div className="relative w-full h-64 sm:h-72 bg-gradient-to-tr from-[#242424] to-[#1a1a1a] overflow-hidden flex items-center justify-center">
+        <div className="relative w-full h-48 sm:h-56 bg-gradient-to-tr from-[#242424] to-[#1a1a1a] overflow-hidden flex items-center justify-center">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
@@ -104,7 +104,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 sm:p-6 space-y-5">
+        <div className="p-4 sm:p-5 space-y-4">
           {/* Title & Price & Stock */}
           <div>
             <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mb-2">
@@ -214,7 +214,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 </label>
               </div>
               
-              <div className="max-h-48 overflow-y-auto pr-3 custom-scrollbar flex flex-wrap gap-2">
+              <div className="max-h-36 overflow-y-auto pr-2 custom-scrollbar flex flex-wrap gap-2">
                 {product.variants.map((v, idx) => {
                   const isSelected = selectedVariant?.name === v.name;
                   const vStock = v.stock !== undefined ? v.stock : 0;
