@@ -1,6 +1,14 @@
 @import "tailwindcss";
 
 @layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .custom-scrollbar {
     scrollbar-width: auto;
     scrollbar-color: #7c3aed #2a2a2a;
@@ -22,3 +30,20 @@
     background: #9061f9;
   }
 }
+
+/* Global scrollbar for the dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #111;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+

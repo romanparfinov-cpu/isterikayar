@@ -321,7 +321,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     <div
       id="admin-panel-modal-overlay"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto hide-scrollbar animate-in fade-in"
     >
       <div
         id="admin-panel-modal-card"

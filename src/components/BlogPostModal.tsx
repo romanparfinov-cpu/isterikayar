@@ -18,7 +18,7 @@ export const BlogPostModal: React.FC<BlogPostModalProps> = ({
     <div
       id="blog-post-modal-overlay"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto hide-scrollbar animate-in fade-in"
     >
       <div
         id="blog-post-modal-card"

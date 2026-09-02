@@ -56,7 +56,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     <div
       id="product-detail-modal-overlay"
       onClick={handleCloseModal}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-[4px] overflow-y-auto animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-[4px] overflow-y-auto hide-scrollbar animate-in fade-in"
     >
       <div
         id="product-detail-modal-card"
