@@ -16,6 +16,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onAddToCart,
 }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'chips'>('grid');
 
   // Initialize selected variant when product changes or modal opens
   useEffect(() => {
@@ -195,15 +196,86 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           {/* Variants Selector */}
           {product.variants && product.variants.length > 0 && (
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-white/60 mb-2.5">
-                Выберите вкус / вариант:
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-3 custom-scrollbar">
+              <div className="flex items-center justify-between mb-2.5">
+                <label className="block text-xs font-bold uppercase tracking-widest text-white/60">
+                  Выберите вкус / вариант:
+                </label>
+                <div className="flex bg-[#111] border border-white/10 rounded-lg p-0.5">
+                  <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md flex transition-colors ${viewMode === 'grid' ? 'bg-[#7c3aed] text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>
+                    <span className="material-icons text-sm">grid_view</span>
+                  </button>
+                  <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md flex transition-colors ${viewMode === 'list' ? 'bg-[#7c3aed] text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>
+                    <span className="material-icons text-sm">view_list</span>
+                  </button>
+                  <button onClick={() => setViewMode('chips')} className={`p-1.5 rounded-md flex transition-colors ${viewMode === 'chips' ? 'bg-[#7c3aed] text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>
+                    <span className="material-icons text-sm">label</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div className={`max-h-48 overflow-y-auto pr-3 custom-scrollbar ${
+                viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 
+                viewMode === 'list' ? 'flex flex-col gap-1.5' : 
+                'flex flex-wrap gap-2'
+              }`}>
                 {product.variants.map((v, idx) => {
                   const isSelected = selectedVariant?.name === v.name;
                   const vStock = v.stock !== undefined ? v.stock : 0;
                   const isOutOfStock = vStock <= 0;
+                  
+                  if (viewMode === 'chips') {
+                    return (
+                      <button
+                        key={idx}
+                        id={`variant-btn-${idx}`}
+                        type="button"
+                        onClick={() => setSelectedVariant(v)}
+                        className={`px-3 py-2 rounded-full border text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#7c3aed] border-[#7c3aed] text-white shadow-md'
+                            : isOutOfStock
+                            ? 'bg-[#111] border-white/5 text-neutral-600 hover:border-white/10'
+                            : 'bg-[#1a1a1a] border-white/10 text-neutral-300 hover:bg-[#252525] hover:border-white/20'
+                        }`}
+                      >
+                        {v.name}
+                      </button>
+                    );
+                  }
 
+                  if (viewMode === 'list') {
+                    return (
+                      <button
+                        key={idx}
+                        id={`variant-btn-${idx}`}
+                        type="button"
+                        onClick={() => setSelectedVariant(v)}
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-lg border text-xs font-semibold uppercase tracking-wider transition-all text-left cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#7c3aed]/20 border-[#7c3aed] text-white shadow-sm ring-1 ring-[#7c3aed]'
+                            : isOutOfStock
+                            ? 'bg-[#111]/50 border-white/5 text-neutral-600 hover:bg-[#181818]'
+                            : 'bg-transparent border-white/5 text-neutral-300 hover:bg-[#1f1f1f] hover:border-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 truncate">
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-[#a78bfa]' : isOutOfStock ? 'bg-red-500/30' : 'bg-emerald-500/50'}`} />
+                          <div className="truncate">{v.name}</div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0 ml-2">
+                          {isOutOfStock ? (
+                            <span className="text-[10px] text-red-500/50 font-bold">НЕТ</span>
+                          ) : (
+                            <span className={`font-black ${isSelected ? 'text-[#a78bfa]' : 'text-white/60'}`}>
+                              {formatPrice(v.price)}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  }
+
+                  // Default 'grid' view
                   return (
                     <button
                       key={idx}
