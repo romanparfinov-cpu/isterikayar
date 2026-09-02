@@ -36,14 +36,19 @@ export const BlogPostModal: React.FC<BlogPostModalProps> = ({
         </button>
 
         {/* Large Header Image */}
-        <div className="relative w-full h-56 sm:h-64 bg-[#111] overflow-hidden shrink-0">
-          <img
-            src={post.imageUrl}
-            alt={post.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent" />
-        </div>
+        {post.imageUrl && (
+          <div className="relative w-full h-56 sm:h-64 bg-[#111] overflow-hidden shrink-0">
+            <img
+              src={post.imageUrl}
+              alt={post.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-transparent to-transparent" />
+          </div>
+        )}
 
         {/* Post Content */}
         <div className="p-6 sm:p-8 overflow-y-auto space-y-4">

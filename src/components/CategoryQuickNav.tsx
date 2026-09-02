@@ -1,5 +1,6 @@
 import React from 'react';
 import { Category } from '../types';
+import { VapeIcon, CartridgeIcon, JuiceBottleIcon } from './Icons';
 
 interface CategoryQuickNavProps {
   selectedCategory: Category | null;
@@ -10,10 +11,10 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
   selectedCategory,
   onSelectCategory,
 }) => {
-  const categories: { name: Category; icon: string; desc: string; isHot?: boolean }[] = [
-    { name: 'Жидкости', icon: 'water_drop', desc: 'Солевые и щелочные миксы', isHot: true },
-    { name: 'POD-системы', icon: 'smartphone', desc: 'Компактные девайсы и наборы' },
-    { name: 'Испарители', icon: 'autorenew', desc: 'Картриджи, койлы и расходники' },
+  const categories: { name: Category; icon: React.ReactNode; desc: string; isHot?: boolean }[] = [
+    { name: 'Жидкости', icon: <JuiceBottleIcon />, desc: 'Солевые и щелочные миксы', isHot: true },
+    { name: 'POD-системы', icon: <VapeIcon />, desc: 'Компактные девайсы и наборы' },
+    { name: 'Испарители', icon: <CartridgeIcon />, desc: 'Картриджи, койлы и расходники' },
   ];
 
   return (
@@ -55,7 +56,7 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
               }`}
             >
               <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl transition-transform group-hover:scale-105 ${isActive ? 'bg-white/20' : 'bg-white/5 text-[#7c3aed]'}`}>
-                <span className="material-icons text-xl sm:text-3xl">{cat.icon}</span>
+                <span className="text-xl sm:text-3xl flex items-center justify-center w-6 h-6 sm:w-10 sm:h-10">{cat.icon}</span>
               </div>
               <div className="flex flex-col items-center w-full px-0.5">
                 <span className="font-bold sm:font-black uppercase tracking-tight sm:tracking-widest text-[11px] sm:text-base block truncate w-full">

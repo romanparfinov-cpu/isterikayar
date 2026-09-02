@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { City, ActiveTab, AppUser } from '../types';
+import { VapeIcon, CartridgeIcon, JuiceBottleIcon } from './Icons';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -29,12 +30,12 @@ export const Header: React.FC<HeaderProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
-  const navItems: { label: ActiveTab; icon: string }[] = [
-    { label: 'Главная', icon: 'home' },
-    { label: 'Жидкости', icon: 'water_drop' },
-    { label: 'POD-системы', icon: 'smartphone' },
-    { label: 'Испарители', icon: 'autorenew' },
-    { label: 'Блог', icon: 'article' },
+  const navItems: { label: ActiveTab; icon: React.ReactNode }[] = [
+    { label: 'Главная', icon: <span className="material-icons">home</span> },
+    { label: 'Жидкости', icon: <JuiceBottleIcon /> },
+    { label: 'POD-системы', icon: <VapeIcon /> },
+    { label: 'Испарители', icon: <CartridgeIcon /> },
+    { label: 'Блог', icon: <span className="material-icons">article</span> },
   ];
 
   const handleCitySelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -253,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <span className="material-icons text-lg">{item.icon}</span>
+                  <span className="text-lg flex items-center justify-center w-5 h-5">{item.icon}</span>
                   {item.label}
                 </button>
               );

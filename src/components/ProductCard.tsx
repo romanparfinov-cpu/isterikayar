@@ -70,16 +70,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
 
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80';
-          }}
-        />
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center opacity-30">
+            <span className="material-icons text-4xl mb-2">image_not_supported</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest">Нет фото</span>
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
 

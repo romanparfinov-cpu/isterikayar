@@ -34,12 +34,19 @@ export const BlogSection: React.FC<BlogSectionProps> = ({ posts }) => {
               onClick={() => setSelectedPost(post)}
               className="group bg-[#1a1a1a] border border-white/10 hover:border-[#7c3aed]/50 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-purple-950/30 flex flex-col"
             >
-              <div className="relative aspect-video w-full bg-[#111] overflow-hidden">
-                <img
-                  src={post.imageUrl}
-                  alt={post.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+              <div className="relative aspect-video w-full bg-gradient-to-br from-[#1c1c1c] to-[#111] overflow-hidden flex items-center justify-center">
+                {post.imageUrl ? (
+                  <img
+                    src={post.imageUrl}
+                    alt={post.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <span className="material-icons text-white/10 text-6xl group-hover:scale-110 transition-transform duration-500">article</span>
+                )}
                 <div className="absolute top-3 right-3 px-2.5 py-1 rounded bg-black/80 backdrop-blur-md text-[10px] uppercase font-bold tracking-wider text-white border border-white/10">
                   {post.readTime}
                 </div>

@@ -74,12 +74,22 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </button>
 
         {/* Large Image on Top */}
-        <div className="relative w-full h-64 sm:h-72 bg-[#111111] overflow-hidden">
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
+        <div className="relative w-full h-64 sm:h-72 bg-gradient-to-tr from-[#242424] to-[#1a1a1a] overflow-hidden flex items-center justify-center">
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center opacity-30">
+              <span className="material-icons text-6xl mb-2">image_not_supported</span>
+              <span className="text-xs uppercase font-bold tracking-widest">Нет фото</span>
+            </div>
+          )}
           <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-[#161616] to-transparent pointer-events-none" />
           
           <div className="absolute top-3 left-3 flex gap-2">
