@@ -15,6 +15,7 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
     { name: 'Жидкости', icon: <JuiceBottleIcon />, desc: 'Солевые и щелочные миксы', isHot: true },
     { name: 'POD-системы', icon: <VapeIcon />, desc: 'Компактные девайсы и наборы' },
     { name: 'Испарители', icon: <CartridgeIcon />, desc: 'Картриджи, койлы и расходники' },
+    { name: 'Снюс', icon: <span className="material-icons">blur_circular</span>, desc: 'Жевательный табак и никотиновые паучи' },
   ];
 
   return (
@@ -40,7 +41,7 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {categories.map((cat) => {
           const isActive = selectedCategory === cat.name;
           return (

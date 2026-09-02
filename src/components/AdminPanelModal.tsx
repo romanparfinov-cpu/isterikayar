@@ -237,14 +237,24 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         ? cleanedVariants.reduce((sum, v) => sum + (v.stock || 0), 0) 
         : Number(baseStock);
 
-      const characteristics: ProductCharacteristics = {
-        ...(power ? { power } : {}),
-        ...(resistance ? { resistance } : {}),
-        ...(tankVolume ? { tankVolume } : {}),
-        ...(pgVg ? { pgVg } : {}),
-        ...(nicotine ? { nicotine } : {}),
-        ...(volume ? { volume } : {}),
-      };
+      let characteristics: ProductCharacteristics = {};
+      if (category === 'Жидкости') {
+        characteristics = {
+          ...(pgVg ? { pgVg } : {}),
+          ...(nicotine ? { nicotine } : {}),
+          ...(volume ? { volume } : {}),
+        };
+      } else if (category === 'Снюс') {
+        characteristics = {
+          ...(nicotine ? { nicotine } : {}),
+        };
+      } else {
+        characteristics = {
+          ...(power ? { power } : {}),
+          ...(resistance ? { resistance } : {}),
+          ...(tankVolume ? { tankVolume } : {}),
+        };
+      }
 
       const productPayload: Omit<Product, 'id'> = {
         name: name.trim(),
@@ -566,6 +576,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     <option value="Жидкости">Жидкости</option>
                     <option value="POD-системы">POD-системы</option>
                     <option value="Испарители">Испарители</option>
+                    <option value="Снюс">Снюс</option>
                   </select>
                 </div>
 
@@ -723,6 +734,21 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         value={volume}
                         onChange={(e) => setVolume(e.target.value)}
                         placeholder="30 мл"
+                        className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-2.5 py-1.5 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                ) : category === 'Снюс' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] text-neutral-400 mb-1">
+                        Крепость
+                      </label>
+                      <input
+                        type="text"
+                        value={nicotine}
+                        onChange={(e) => setNicotine(e.target.value)}
+                        placeholder="Например, 150 мг"
                         className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-2.5 py-1.5 text-xs text-white"
                       />
                     </div>

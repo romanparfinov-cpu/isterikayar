@@ -388,7 +388,7 @@ export default function App() {
     if (activeTab === 'Главная') {
       return cityProducts;
     }
-    if (activeTab === 'Жидкости' || activeTab === 'POD-системы' || activeTab === 'Испарители') {
+    if (activeTab === 'Жидкости' || activeTab === 'POD-системы' || activeTab === 'Испарители' || activeTab === 'Снюс') {
       return cityProducts.filter((p) => p.category === activeTab);
     }
     return [];

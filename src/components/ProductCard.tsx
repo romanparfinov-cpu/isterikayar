@@ -110,7 +110,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               В наличии: <span className="text-emerald-400 font-bold">{totalStock} шт.</span>
               {product.variants && product.variants.length > 0 && (
                 <span className="text-white/40 ml-1">
-                  ({product.variants.length} {product.category === 'Жидкости' ? 'вкус.' : 'вар.'})
+                  ({product.variants.length} {product.category === 'Жидкости' || product.category === 'Снюс' ? 'вкус.' : 'вар.'})
                 </span>
               )}
             </p>

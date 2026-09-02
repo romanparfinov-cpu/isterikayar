@@ -35,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Жидкости', icon: <JuiceBottleIcon /> },
     { label: 'POD-системы', icon: <VapeIcon /> },
     { label: 'Испарители', icon: <CartridgeIcon /> },
+    { label: 'Снюс', icon: <span className="material-icons">blur_circular</span> },
     { label: 'Блог', icon: <span className="material-icons">article</span> },
   ];
 
@@ -55,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Left: Logo and Nav */}
           <div className="flex items-center gap-3 lg:gap-10">
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium uppercase tracking-widest">
+            <nav className="hidden lg:flex items-center gap-1 p-1 bg-[#1a1a1a] border border-white/5 rounded-full shadow-inner">
               {navItems.map((item) => {
                 const isActive = activeTab === item.label;
                 return (
@@ -64,12 +65,13 @@ export const Header: React.FC<HeaderProps> = ({
                     id={`nav-link-${item.label}`}
                     type="button"
                     onClick={() => onTabChange(item.label)}
-                    className={`transition-colors cursor-pointer text-xs lg:text-sm font-bold uppercase tracking-widest ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer text-[11px] font-bold uppercase tracking-widest ${
                       isActive
-                        ? 'text-white border-b-2 border-[#7c3aed] pb-1'
-                        : 'text-white/60 hover:text-[#7c3aed]'
+                        ? 'bg-[#7c3aed] text-white shadow-md shadow-[#7c3aed]/20'
+                        : 'text-white/50 hover:text-white hover:bg-white/5'
                     }`}
                   >
+                    <span className={`flex items-center justify-center scale-75 ${isActive ? 'text-white' : 'text-white/40'}`}>{item.icon}</span>
                     {item.label}
                   </button>
                 );
