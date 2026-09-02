@@ -2,23 +2,4 @@ import { Product, BlogPost } from '../types';
 
 export const INITIAL_PRODUCTS: Product[] = [];
 
-export const INITIAL_BLOG_POSTS: BlogPost[] = [
-  {
-    id: 'blog-1',
-    title: 'Как правильно ухаживать за картриджами и продлить их жизнь',
-    excerpt: 'Простые советы по заправке, первой пропитке испарителя и выбору подходящей жидкости.',
-    content: 'Чтобы картридж служил долго и не подгорал в первые дни, соблюдайте базовые правила: после первой заправки нового картриджа обязательно подождите 10-15 минут для полной пропитки хлопкового фитиля. Не парите на морозе и следите за уровнем жидкости, не допуская полного осушения бака.',
-    imageUrl: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=800&q=80',
-    date: '31 августа 2026',
-    readTime: '3 мин'
-  },
-  {
-    id: 'blog-2',
-    title: 'Топ POD-систем 2026 года для начинающих и профи',
-    excerpt: 'Сравнение моделей Vaporesso XROS, Geekvape и других популярных устройств.',
-    content: 'В 2026 году линейка Vaporesso XROS остается лидером по отсутствию протечек и вкусопередаче, в то время как Geekvape H45 предлагает непревзойденную прочность и регулировку мощности.',
-    imageUrl: 'https://images.unsplash.com/photo-1541689592655-f5f52825a3b8?auto=format&fit=crop&w=800&q=80',
-    date: '28 августа 2026',
-    readTime: '5 мин'
-  }
-];
+export const INITIAL_BLOG_POSTS: BlogPost[] = [];

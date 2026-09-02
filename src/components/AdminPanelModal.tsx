@@ -157,7 +157,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
     // Convert variants array to text
     if (prod.variants && prod.variants.length > 0) {
-      setVariantsText(prod.variants.map(v => v.name).join('\n'));
+      setVariantsText(prod.variants.map(v => `${v.name} ${v.stock ?? 1}`).join('\n'));
     } else {
       setVariantsText('');
     }
@@ -222,13 +222,20 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       setIsSubmitting(true);
       
       const lines = variantsText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      const cleanedVariants: ProductVariant[] = lines.map(line => ({
-        name: line,
-        price: Number(price),
-        stock: Number(baseStock)
-      }));
+      const cleanedVariants: ProductVariant[] = lines.map(line => {
+        const match = line.match(/^(.*?)(?:\s+(\d+))?$/);
+        const name = match ? match[1].trim() : line;
+        const stock = match && match[2] ? Number(match[2]) : 1;
+        return {
+          name,
+          price: Number(price),
+          stock
+        };
+      });
 
-      const totalStock = Number(baseStock);
+      const totalStock = cleanedVariants.length > 0 
+        ? cleanedVariants.reduce((sum, v) => sum + (v.stock || 0), 0) 
+        : Number(baseStock);
 
       const characteristics: ProductCharacteristics = {
         ...(power ? { power } : {}),
@@ -665,11 +672,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     rows={4}
                     value={variantsText}
                     onChange={(e) => setVariantsText(e.target.value)}
-                    placeholder="Клубника&#10;Черника Лед&#10;Банан"
+                    placeholder="Клубника 2&#10;Черника Лед 5&#10;Банан"
                     className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#7c3aed]"
                   />
                   <p className="text-[11px] text-neutral-400 mt-1.5">
-                    Оставьте пустым, если у товара нет вкусов.
+                    Укажите количество через пробел (например, "Персик личи 2"). Если количество не указано, будет 1 шт.
                   </p>
                 </div>
               </div>

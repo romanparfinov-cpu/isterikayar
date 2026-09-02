@@ -16,7 +16,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onAddToCart,
 }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'chips'>('grid');
+  const [isCharacteristicsOpen, setIsCharacteristicsOpen] = useState(false);
 
   // Initialize selected variant when product changes or modal opens
   useEffect(() => {
@@ -141,55 +141,67 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
           {/* Characteristics & Specs */}
           {product.characteristics && Object.keys(product.characteristics).length > 0 && (
-            <div className="bg-[#1a1a1a] p-4 rounded-xl border border-white/10 text-xs space-y-2.5">
-              <div className="font-bold text-white mb-1.5 flex items-center gap-1.5 text-xs uppercase tracking-widest">
-                <span className="material-icons text-sm text-[#7c3aed]">tune</span>
-                Характеристики
-              </div>
-              <div className="grid grid-cols-2 gap-2.5 text-neutral-300">
-                {product.characteristics.power && (
-                  <div>
-                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Мощность:</span>
-                    <span className="font-bold text-white">{product.characteristics.power}</span>
-                  </div>
-                )}
-                {product.characteristics.resistance && (
-                  <div>
-                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Сопротивление:</span>
-                    <span className="font-bold text-white">{product.characteristics.resistance}</span>
-                  </div>
-                )}
-                {product.characteristics.tankVolume && (
-                  <div>
-                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Объем бака / АКБ:</span>
-                    <span className="font-bold text-white">{product.characteristics.tankVolume}</span>
-                  </div>
-                )}
-                {product.characteristics.pgVg && (
-                  <div>
-                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Соотношение PG/VG:</span>
-                    <span className="font-bold text-white">{product.characteristics.pgVg}</span>
-                  </div>
-                )}
-                {product.characteristics.nicotine && (
-                  <div>
-                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Крепость:</span>
-                    <span className="font-bold text-white">{product.characteristics.nicotine}</span>
-                  </div>
-                )}
-                {product.characteristics.volume && (
-                  <div>
-                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Объем флакона:</span>
-                    <span className="font-bold text-white">{product.characteristics.volume}</span>
-                  </div>
-                )}
-                <div>
-                  <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Выбранный вкус:</span>
-                  <span className={`font-bold ${isCurrentOutOfStock ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {isCurrentOutOfStock ? '0 шт. (нет)' : `${currentStock} шт.`}
-                  </span>
+            <div className="bg-[#1a1a1a] rounded-xl border border-white/10 text-xs overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsCharacteristicsOpen(!isCharacteristicsOpen)}
+                className="w-full p-4 font-bold text-white flex items-center justify-between text-xs uppercase tracking-widest hover:bg-[#252525] transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="material-icons text-sm text-[#7c3aed]">tune</span>
+                  Характеристики
                 </div>
-              </div>
+                <span className={`material-icons text-white/50 transition-transform ${isCharacteristicsOpen ? 'rotate-180' : ''}`}>
+                  expand_more
+                </span>
+              </button>
+              
+              {isCharacteristicsOpen && (
+                <div className="p-4 pt-0 grid grid-cols-2 gap-2.5 text-neutral-300 border-t border-white/5 mt-2">
+                  {product.characteristics.power && (
+                    <div>
+                      <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Мощность:</span>
+                      <span className="font-bold text-white">{product.characteristics.power}</span>
+                    </div>
+                  )}
+                  {product.characteristics.resistance && (
+                    <div>
+                      <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Сопротивление:</span>
+                      <span className="font-bold text-white">{product.characteristics.resistance}</span>
+                    </div>
+                  )}
+                  {product.characteristics.tankVolume && (
+                    <div>
+                      <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Объем бака / АКБ:</span>
+                      <span className="font-bold text-white">{product.characteristics.tankVolume}</span>
+                    </div>
+                  )}
+                  {product.characteristics.pgVg && (
+                    <div>
+                      <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Соотношение PG/VG:</span>
+                      <span className="font-bold text-white">{product.characteristics.pgVg}</span>
+                    </div>
+                  )}
+                  {product.characteristics.nicotine && (
+                    <div>
+                      <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Крепость:</span>
+                      <span className="font-bold text-white">{product.characteristics.nicotine}</span>
+                    </div>
+                  )}
+                  {product.characteristics.volume && (
+                    <div>
+                      <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Объем флакона:</span>
+                      <span className="font-bold text-white">{product.characteristics.volume}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Выбранный вкус:</span>
+                    <span className={`font-bold ${isCurrentOutOfStock ? 'text-red-400' : 'text-emerald-400'}`}>
+                      {isCurrentOutOfStock ? '0 шт. (нет)' : `${currentStock} шт.`}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -200,109 +212,29 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <label className="block text-xs font-bold uppercase tracking-widest text-white/60">
                   Выберите вкус / вариант:
                 </label>
-                <div className="flex bg-[#111] border border-white/10 rounded-lg p-0.5">
-                  <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md flex transition-colors ${viewMode === 'grid' ? 'bg-[#7c3aed] text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>
-                    <span className="material-icons text-sm">grid_view</span>
-                  </button>
-                  <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md flex transition-colors ${viewMode === 'list' ? 'bg-[#7c3aed] text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>
-                    <span className="material-icons text-sm">view_list</span>
-                  </button>
-                  <button onClick={() => setViewMode('chips')} className={`p-1.5 rounded-md flex transition-colors ${viewMode === 'chips' ? 'bg-[#7c3aed] text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>
-                    <span className="material-icons text-sm">label</span>
-                  </button>
-                </div>
               </div>
               
-              <div className={`max-h-48 overflow-y-auto pr-3 custom-scrollbar ${
-                viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 
-                viewMode === 'list' ? 'flex flex-col gap-1.5' : 
-                'flex flex-wrap gap-2'
-              }`}>
+              <div className="max-h-48 overflow-y-auto pr-3 custom-scrollbar flex flex-wrap gap-2">
                 {product.variants.map((v, idx) => {
                   const isSelected = selectedVariant?.name === v.name;
                   const vStock = v.stock !== undefined ? v.stock : 0;
                   const isOutOfStock = vStock <= 0;
                   
-                  if (viewMode === 'chips') {
-                    return (
-                      <button
-                        key={idx}
-                        id={`variant-btn-${idx}`}
-                        type="button"
-                        onClick={() => setSelectedVariant(v)}
-                        className={`px-3 py-2 rounded-full border text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#7c3aed] border-[#7c3aed] text-white shadow-md'
-                            : isOutOfStock
-                            ? 'bg-[#111] border-white/5 text-neutral-600 hover:border-white/10'
-                            : 'bg-[#1a1a1a] border-white/10 text-neutral-300 hover:bg-[#252525] hover:border-white/20'
-                        }`}
-                      >
-                        {v.name}
-                      </button>
-                    );
-                  }
-
-                  if (viewMode === 'list') {
-                    return (
-                      <button
-                        key={idx}
-                        id={`variant-btn-${idx}`}
-                        type="button"
-                        onClick={() => setSelectedVariant(v)}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-lg border text-xs font-semibold uppercase tracking-wider transition-all text-left cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#7c3aed]/20 border-[#7c3aed] text-white shadow-sm ring-1 ring-[#7c3aed]'
-                            : isOutOfStock
-                            ? 'bg-[#111]/50 border-white/5 text-neutral-600 hover:bg-[#181818]'
-                            : 'bg-transparent border-white/5 text-neutral-300 hover:bg-[#1f1f1f] hover:border-white/10'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 truncate">
-                          <div className={`w-2 h-2 rounded-full shrink-0 ${isSelected ? 'bg-[#a78bfa]' : isOutOfStock ? 'bg-red-500/30' : 'bg-emerald-500/50'}`} />
-                          <div className="truncate">{v.name}</div>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0 ml-2">
-                          {isOutOfStock ? (
-                            <span className="text-[10px] text-red-500/50 font-bold">НЕТ</span>
-                          ) : (
-                            <span className={`font-black ${isSelected ? 'text-[#a78bfa]' : 'text-white/60'}`}>
-                              {formatPrice(v.price)}
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  }
-
-                  // Default 'grid' view
                   return (
                     <button
                       key={idx}
                       id={`variant-btn-${idx}`}
                       type="button"
                       onClick={() => setSelectedVariant(v)}
-                      className={`flex items-center justify-between p-3 rounded-lg border text-xs font-semibold uppercase tracking-wider transition-all text-left cursor-pointer ${
+                      className={`px-3 py-2 rounded-full border text-[11px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#7c3aed]/20 border-[#7c3aed] text-white shadow-sm ring-1 ring-[#7c3aed]'
+                          ? 'bg-[#7c3aed] border-[#7c3aed] text-white shadow-md'
                           : isOutOfStock
-                          ? 'bg-[#181818]/60 border-white/5 text-neutral-500 hover:border-white/10'
-                          : 'bg-[#1c1c1c] border-white/10 text-neutral-300 hover:bg-[#252525] hover:border-white/20'
+                          ? 'bg-[#111] border-white/5 text-neutral-600 hover:border-white/10'
+                          : 'bg-[#1a1a1a] border-white/10 text-neutral-300 hover:bg-[#252525] hover:border-white/20'
                       }`}
                     >
-                      <div className="min-w-0 flex-1 mr-2">
-                        <div className="truncate">{v.name}</div>
-                        <div className="text-[10px] mt-0.5 font-normal">
-                          {isOutOfStock ? (
-                            <span className="text-red-400 font-bold">Нет в наличии</span>
-                          ) : (
-                            <span className="text-emerald-400 font-bold">{vStock} шт.</span>
-                          )}
-                        </div>
-                      </div>
-                      <span className={`font-black shrink-0 ${isSelected ? 'text-[#a78bfa]' : isOutOfStock ? 'text-neutral-500' : 'text-white/60'}`}>
-                        {formatPrice(v.price)}
-                      </span>
+                      {v.name}
                     </button>
                   );
                 })}
