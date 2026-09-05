@@ -5,7 +5,7 @@ interface FooterProps {
   telegramUsername?: string;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onShowToast, telegramUsername = 'ISTERTELEGRAM' }) => {
+export const Footer: React.FC<FooterProps> = ({ onShowToast, telegramUsername = 'isterikaMngr' }) => {
   const cleanTelegramUsername = telegramUsername.replace('@', '');
 
   return (
@@ -19,9 +19,6 @@ export const Footer: React.FC<FooterProps> = ({ onShowToast, telegramUsername = 
                 ISTERIKA
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-white/60 leading-relaxed max-w-sm">
-              Премиальный вейп-шоп с доставкой и самовывозом в г. Ивье и г. Лида. Оригинальные жидкости, POD-девайсы и расходные материалы.
-            </p>
             <div className="flex items-center gap-3 pt-2 text-xs uppercase font-bold tracking-widest text-white/60">
               <span>г. Ивье</span>
               <span>•</span>

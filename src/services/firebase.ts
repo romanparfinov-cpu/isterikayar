@@ -51,7 +51,7 @@ const STORAGE_SETTINGS_KEY = 'isterika_settings_v1';
 const STORAGE_BLOGS_KEY = 'isterika_blogs_v1';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  telegramUsername: 'ISTERTELEGRAM'
+  telegramUsername: 'isterikaMngr'
 };
 
 // Initialize Firebase

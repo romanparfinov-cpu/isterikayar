@@ -195,7 +195,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     </div>
                   )}
                   <div>
-                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">Выбранный вкус:</span>
+                    <span className="text-white/40 uppercase font-semibold text-[10px] tracking-wider block">
+                      {product.category === 'POD-системы' ? 'Выбранный цвет:' : product.category === 'Испарители' ? 'Выбранный тип:' : 'Выбранный вкус:'}
+                    </span>
                     <span className={`font-bold ${isCurrentOutOfStock ? 'text-red-400' : 'text-emerald-400'}`}>
                       {isCurrentOutOfStock ? '0 шт. (нет)' : `${currentStock} шт.`}
                     </span>
@@ -210,7 +212,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-2.5">
                 <label className="block text-xs font-bold uppercase tracking-widest text-white/60">
-                  Выберите вкус / вариант:
+                  {product.category === 'POD-системы' ? 'Выберите цвет:' : product.category === 'Испарители' ? 'Выберите тип:' : 'Выберите вкус / вариант:'}
                 </label>
               </div>
               
@@ -259,7 +261,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 {isCurrentOutOfStock ? 'block' : 'add_shopping_cart'}
               </span>
               {isCurrentOutOfStock
-                ? 'Этот вкус закончился'
+                ? (product.category === 'POD-системы' ? 'Этот цвет закончился' : product.category === 'Испарители' ? 'Этот тип закончился' : 'Этот вкус закончился')
                 : `Добавить в корзину • ${formatPrice(currentPrice)}`}
             </button>
           </div>

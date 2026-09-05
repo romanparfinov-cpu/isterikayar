@@ -1,6 +1,6 @@
 import React from 'react';
 import { Category } from '../types';
-import { VapeIcon, CartridgeIcon, JuiceBottleIcon } from './Icons';
+import { VapeIcon, CartridgeIcon, JuiceBottleIcon, SnusIcon } from './Icons';
 
 interface CategoryQuickNavProps {
   selectedCategory: Category | null;
@@ -12,10 +12,10 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
   onSelectCategory,
 }) => {
   const categories: { name: Category; icon: React.ReactNode; desc: string; isHot?: boolean }[] = [
-    { name: 'Жидкости', icon: <JuiceBottleIcon />, desc: 'Солевые и щелочные миксы', isHot: true },
-    { name: 'POD-системы', icon: <VapeIcon />, desc: 'Компактные девайсы и наборы' },
-    { name: 'Испарители', icon: <CartridgeIcon />, desc: 'Картриджи, койлы и расходники' },
-    { name: 'Снюс', icon: <span className="material-icons">blur_circular</span>, desc: 'Жевательный табак и никотиновые паучи' },
+    { name: 'Жидкости', icon: <JuiceBottleIcon />, desc: 'Солевые и щелочные жидкости', isHot: true },
+    { name: 'POD-системы', icon: <VapeIcon />, desc: 'Компактные девайсы' },
+    { name: 'Испарители', icon: <CartridgeIcon />, desc: 'Расходники' },
+    { name: 'Снюс', icon: <SnusIcon />, desc: 'Жевательный табак и никотиновые паучи' },
   ];
 
   return (
@@ -50,15 +50,16 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
               id={`quick-cat-btn-${cat.name}`}
               type="button"
               onClick={() => onSelectCategory(isActive ? null : cat.name)}
-              className={`p-2 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-1 sm:gap-2.5 transition-all duration-200 cursor-pointer text-center relative overflow-hidden group ${
+              className={`p-2 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-2 sm:gap-2.5 transition-all duration-200 cursor-pointer text-center relative overflow-hidden group ${
                 isActive
                   ? 'bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] text-white shadow-lg shadow-purple-950/40 scale-[1.01]'
                   : 'bg-[#161616] border border-white/10 hover:border-[#7c3aed] hover:bg-[#1a1a1a] text-white'
               }`}
             >
-              <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl transition-transform group-hover:scale-105 ${isActive ? 'bg-white/20' : 'bg-white/5 text-[#7c3aed]'}`}>
+              <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl transition-transform group-hover:scale-105 flex items-center justify-center ${isActive ? 'bg-white/20' : 'bg-white/5 text-[#7c3aed]'}`}>
                 <span className="text-xl sm:text-3xl flex items-center justify-center w-6 h-6 sm:w-10 sm:h-10">{cat.icon}</span>
               </div>
+
               <div className="flex flex-col items-center w-full px-0.5">
                 <span className="font-bold sm:font-black uppercase tracking-tight sm:tracking-widest text-[11px] sm:text-base block truncate w-full">
                   {cat.name}

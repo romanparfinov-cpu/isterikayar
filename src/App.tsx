@@ -64,7 +64,7 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [telegramUsername, setTelegramUsername] = useState<string>('ISTERTELEGRAM');
+  const [telegramUsername, setTelegramUsername] = useState<string>('isterikaMngr');
 
   // Cart
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -133,7 +133,7 @@ export default function App() {
         };
 
         const [settings, blogs] = await Promise.all([
-          withTimeout(fetchSettings(), 5000, { telegramUsername: 'ISTERTELEGRAM' }),
+          withTimeout(fetchSettings(), 5000, { telegramUsername: 'isterikaMngr' }),
           withTimeout(fetchBlogPosts(), 5000, [])
         ]);
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { City, ActiveTab, AppUser } from '../types';
-import { VapeIcon, CartridgeIcon, JuiceBottleIcon } from './Icons';
+import { VapeIcon, CartridgeIcon, JuiceBottleIcon, SnusIcon } from './Icons';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Жидкости', icon: <JuiceBottleIcon /> },
     { label: 'POD-системы', icon: <VapeIcon /> },
     { label: 'Испарители', icon: <CartridgeIcon /> },
-    { label: 'Снюс', icon: <span className="material-icons">blur_circular</span> },
+    { label: 'Снюс', icon: <SnusIcon /> },
     { label: 'Блог', icon: <span className="material-icons">article</span> },
   ];
 

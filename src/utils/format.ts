@@ -15,7 +15,7 @@ export function createTelegramOrderUrl(
   city: City, 
   items: { name: string; variantName: string; quantity: number; price: number }[], 
   total: number,
-  telegramUsername: string = 'ISTERTELEGRAM'
+  telegramUsername: string = 'isterikaMngr'
 ): { url: string; orderText: string } {
   let orderText = `🛒 *Новый заказ ${orderNumber}*\n`;
   orderText += `📍 *Город:* ${city}\n\n`;
