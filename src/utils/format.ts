@@ -29,7 +29,11 @@ export function createTelegramOrderUrl(
   orderText += `\n💰 *Итого к оплате:* ${total.toFixed(2)} BYN\n`;
   orderText += `⏰ *Дата:* ${new Date().toLocaleString('ru-RU')}`;
 
-  const cleanUsername = telegramUsername.replace('@', '');
+  let cleanUsername = (telegramUsername || 'isterikaMngr').replace('@', '').trim();
+  const lower = cleanUsername.toLowerCase();
+  if (!cleanUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+    cleanUsername = 'isterikaMngr';
+  }
   const url = `https://t.me/${cleanUsername}?text=${encodeURIComponent(orderText)}`;
   
   return { url, orderText };

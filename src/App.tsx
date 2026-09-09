@@ -113,6 +113,21 @@ export default function App() {
   useEffect(() => {
     let isMounted = true;
 
+    // Proactively clean up any stale cached username from localStorage
+    try {
+      const rawSettings = localStorage.getItem('isterika_settings_v1');
+      if (rawSettings) {
+        const parsed = JSON.parse(rawSettings);
+        if (parsed.telegramUsername) {
+          const clean = parsed.telegramUsername.toLowerCase().replace('@', '').trim();
+          if (!clean || clean === 'istermanager' || clean === 'istertelegram' || clean.includes('istermanager') || clean.includes('istertelegram')) {
+            parsed.telegramUsername = 'isterikaMngr';
+            localStorage.setItem('isterika_settings_v1', JSON.stringify(parsed));
+          }
+        }
+      }
+    } catch {}
+
     async function loadData() {
       try {
         setIsLoading(true);
@@ -140,7 +155,15 @@ export default function App() {
         if (isMounted) {
           setBlogPosts(blogs);
           if (settings && settings.telegramUsername) {
-            setTelegramUsername(settings.telegramUsername);
+            const clean = settings.telegramUsername.replace('@', '').trim();
+            const lower = clean.toLowerCase();
+            if (!clean || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+              setTelegramUsername('isterikaMngr');
+            } else {
+              setTelegramUsername(clean);
+            }
+          } else {
+            setTelegramUsername('isterikaMngr');
           }
         }
       } catch (err) {
@@ -563,7 +586,15 @@ export default function App() {
         onDeleteProduct={handleDeleteProduct}
         onSaveBlogPost={handleSaveBlogPost}
         onDeleteBlogPost={handleDeleteBlogPost}
-        onSettingsChange={setTelegramUsername}
+        onSettingsChange={(newUsername) => {
+          const clean = newUsername.replace('@', '').trim();
+          const lower = clean.toLowerCase();
+          if (!clean || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+            setTelegramUsername('isterikaMngr');
+          } else {
+            setTelegramUsername(clean);
+          }
+        }}
         onShowToast={showToast}
       />
 

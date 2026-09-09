@@ -222,27 +222,53 @@ export async function deleteProductFromDB(productId: string): Promise<void> {
 
 // Settings API
 export async function fetchSettings(): Promise<AppSettings> {
+  let settings: AppSettings = { ...DEFAULT_SETTINGS };
+
   if (db) {
     try {
       const snap = await getDocs(collection(db, 'settings'));
-      if (snap.empty) {
-        await setDoc(doc(db, 'settings', 'global'), DEFAULT_SETTINGS);
-        return DEFAULT_SETTINGS;
+      if (!snap.empty) {
+        settings = { ...DEFAULT_SETTINGS, ...snap.docs[0].data() } as AppSettings;
       }
-      return snap.docs[0].data() as AppSettings;
     } catch (e) {
       console.warn('Firestore fetchSettings failed:', e);
     }
   }
   
-  try {
-    const raw = localStorage.getItem(STORAGE_SETTINGS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return DEFAULT_SETTINGS;
+  if (!settings.telegramUsername || settings.telegramUsername === DEFAULT_SETTINGS.telegramUsername) {
+    try {
+      const raw = localStorage.getItem(STORAGE_SETTINGS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.telegramUsername) {
+          settings.telegramUsername = parsed.telegramUsername;
+        }
+      }
+    } catch {}
+  }
+
+  // Purge any old/stale usernames like istermanager or istertelegram
+  const cleanUsername = (settings.telegramUsername || '').replace('@', '').trim();
+  const lower = cleanUsername.toLowerCase();
+  if (!cleanUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+    settings.telegramUsername = 'isterikaMngr';
+    try {
+      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings));
+    } catch {}
+  }
+
+  return settings;
 }
 
 export async function updateSettingsInDB(settings: AppSettings): Promise<void> {
+  const cleanUsername = (settings.telegramUsername || '').replace('@', '').trim();
+  const lower = cleanUsername.toLowerCase();
+  if (!cleanUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+    settings.telegramUsername = 'isterikaMngr';
+  } else {
+    settings.telegramUsername = cleanUsername;
+  }
+
   if (db) {
     try {
       await setDoc(doc(db, 'settings', 'global'), settings, { merge: true });
@@ -250,7 +276,9 @@ export async function updateSettingsInDB(settings: AppSettings): Promise<void> {
       console.warn('Firestore updateSettings failed:', e);
     }
   }
-  localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings));
+  try {
+    localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings));
+  } catch {}
 }
 
 // Orders API

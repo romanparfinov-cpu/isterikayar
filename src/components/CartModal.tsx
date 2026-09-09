@@ -52,7 +52,13 @@ export const CartModal: React.FC<CartModalProps> = ({
       price: item.variant.price,
     }));
 
-    const { url } = createTelegramOrderUrl(orderNumber, city, orderItems, totalSum, telegramUsername);
+    let cleanUsername = (telegramUsername || 'isterikaMngr').replace('@', '').trim();
+    const lower = cleanUsername.toLowerCase();
+    if (!cleanUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+      cleanUsername = 'isterikaMngr';
+    }
+
+    const { url } = createTelegramOrderUrl(orderNumber, city, orderItems, totalSum, cleanUsername);
 
     // Navigate in current window to ensure Telegram deep links work in Safari without popup blockers
     window.location.href = url;

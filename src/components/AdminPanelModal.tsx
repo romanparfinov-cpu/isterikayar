@@ -75,7 +75,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setLocalTelegram(telegramUsername);
+      const clean = (telegramUsername || 'isterikaMngr').replace('@', '').trim();
+      const lower = clean.toLowerCase();
+      if (!clean || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+        setLocalTelegram('isterikaMngr');
+      } else {
+        setLocalTelegram(clean);
+      }
     }
   }, [isOpen, telegramUsername]);
 
@@ -118,8 +124,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
     try {
-      await updateSettingsInDB({ telegramUsername: localTelegram });
-      onSettingsChange(localTelegram);
+      let targetUser = (localTelegram || '').replace('@', '').trim();
+      const lower = targetUser.toLowerCase();
+      if (!targetUser || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+        targetUser = 'isterikaMngr';
+      }
+      setLocalTelegram(targetUser);
+      await updateSettingsInDB({ telegramUsername: targetUser });
+      onSettingsChange(targetUser);
       onShowToast('Настройки сохранены', 'success');
     } catch (e) {
       onShowToast('Ошибка при сохранении настроек', 'error');

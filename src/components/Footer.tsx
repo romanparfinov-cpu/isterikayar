@@ -6,7 +6,11 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ onShowToast, telegramUsername = 'isterikaMngr' }) => {
-  const cleanTelegramUsername = telegramUsername.replace('@', '');
+  let cleanTelegramUsername = (telegramUsername || 'isterikaMngr').replace('@', '').trim();
+  const lower = cleanTelegramUsername.toLowerCase();
+  if (!cleanTelegramUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+    cleanTelegramUsername = 'isterikaMngr';
+  }
 
   return (
     <footer id="main-footer" className="mt-20 border-t border-white/10 bg-[#141414] text-white/50">
