@@ -9,6 +9,9 @@ import {
 } from 'firebase/auth';
 import { 
   getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   collection, 
   getDocs, 
   addDoc, 
@@ -79,7 +82,22 @@ try {
     ? firebaseConfig.firestoreDatabaseId
     : undefined;
   
-  db = customDbId ? getFirestore(app, customDbId) : getFirestore(app);
+  // Use initializeFirestore with local persistent cache and multi-tab sync
+  try {
+    const firestoreSettings = {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      }),
+      experimentalAutoDetectLongPolling: true
+    };
+    db = customDbId 
+      ? initializeFirestore(app, firestoreSettings, customDbId) 
+      : initializeFirestore(app, firestoreSettings);
+  } catch {
+    // If already initialized, fallback to getFirestore
+    db = customDbId ? getFirestore(app, customDbId) : getFirestore(app);
+  }
+  
   storage = getStorage(app);
   googleProvider = new GoogleAuthProvider();
   googleProvider.setCustomParameters({ prompt: 'select_account' });
