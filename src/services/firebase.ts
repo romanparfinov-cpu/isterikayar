@@ -27,19 +27,19 @@ import {
   getDownloadURL 
 } from 'firebase/storage';
 import { Product, AppUser, Order, AppSettings, BlogPost } from '../types';
+import firebaseAppletConfig from '../../firebase-applet-config.json';
 import { INITIAL_PRODUCTS, INITIAL_BLOG_POSTS } from '../data/initialProducts';
 
-// Configuration supporting both auto-provisioned config and custom Vercel environment variables
+// Configuration supporting both auto-provisioned config and custom environment variables
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyByOxuteEKwId8W85KLLn_gStv5ObV2zWM",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "isterikaai.firebaseapp.com",
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://isterikaai-default-rtdb.firebaseio.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "isterikaai",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "isterikaai.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "285709727430",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:285709727430:web:05542c9dbc2470d4b309c7",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-9L6R6RMX2G",
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || '(default)'
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey || "AIzaSyBevq3NApdPxvv4nY-rOTW-nQTPTTSpFjg",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain || "abstract-parser-n6shk.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId || "abstract-parser-n6shk",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket || "abstract-parser-n6shk.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId || "500286417908",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId || "1:500286417908:web:1d619e2a9420da94e467a1",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseAppletConfig.measurementId || "",
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || firebaseAppletConfig.firestoreDatabaseId || 'ai-studio-isterika-94f58454-06d4-4509-83e6-3eef6fe198cd'
 };
 
 export const ADMIN_EMAIL = 'romanparfinov@gmail.com';
@@ -122,7 +122,8 @@ export async function fetchProductsFromRest(): Promise<Product[]> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3500);
-    const url = 'https://firestore.googleapis.com/v1/projects/isterikaai/databases/(default)/documents/products';
+    const dbName = firebaseConfig.firestoreDatabaseId || '(default)';
+    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${dbName}/documents/products`;
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timeoutId);
     if (!res.ok) return [];

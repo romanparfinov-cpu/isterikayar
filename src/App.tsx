@@ -28,7 +28,6 @@ import {
 
 import { Header } from './components/Header';
 import { AgeVerificationModal } from './components/AgeVerificationModal';
-import { CategoryQuickNav } from './components/CategoryQuickNav';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { CartModal } from './components/CartModal';
@@ -61,7 +60,10 @@ export default function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((item: any) => item && item.id && item.variant);
     } catch {
       return [];
     }
@@ -164,8 +166,7 @@ export default function App() {
           }
         }
       } catch (err) {
-        console.error('Failed to fetch data:', err);
-        showToast('Не удалось загрузить данные', 'error');
+        console.warn('Data sync note (using cached/fallback data):', err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -419,16 +420,6 @@ export default function App() {
               <BlogSection posts={blogPosts} />
             ) : (
               <div>
-                {/* Home Page Category Navigation Tiles (only on Главная) */}
-                {activeTab === 'Главная' && (
-                  <CategoryQuickNav
-                    selectedCategory={null}
-                    onSelectCategory={(cat) => {
-                      if (cat) setActiveTab(cat);
-                    }}
-                  />
-                )}
-
                 {/* Section Header */}
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 pb-4 border-b border-white/10">
                   <div>
@@ -454,10 +445,10 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('Главная')}
-                      className="text-xs uppercase font-bold tracking-widest text-[#7c3aed] hover:text-[#9061f9] flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+                      className="text-xs uppercase font-bold tracking-widest text-[#7c3aed] hover:text-[#9061f9] flex items-center gap-1 cursor-pointer self-start sm:self-auto transition-colors"
                     >
                       <span className="material-icons text-sm">arrow_back</span>
-                      Все категории
+                      На главную
                     </button>
                   )}
                 </div>

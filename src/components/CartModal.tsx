@@ -28,7 +28,7 @@ export const CartModal: React.FC<CartModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const totalSum = cartItems.reduce((acc, item) => acc + item.variant.price * item.quantity, 0);
+  const totalSum = cartItems.reduce((acc, item) => acc + (item.variant?.price ?? 0) * (item.quantity ?? 1), 0);
 
   const [orderNumber, setOrderNumber] = useState(() => generateOrderNumber(city));
 
@@ -40,10 +40,10 @@ export const CartModal: React.FC<CartModalProps> = ({
 
   const orderItems = useMemo(() => {
     return cartItems.map((item) => ({
-      name: item.name,
-      variantName: item.variant.name,
-      quantity: item.quantity,
-      price: item.variant.price,
+      name: item.name || 'Товар',
+      variantName: item.variant?.name || 'Стандарт',
+      quantity: item.quantity || 1,
+      price: item.variant?.price ?? 0,
     }));
   }, [cartItems]);
 
@@ -78,11 +78,6 @@ export const CartModal: React.FC<CartModalProps> = ({
       status: 'new',
     };
     addOrderToDB(newOrder).catch((err) => console.warn('addOrderToDB warning:', err));
-
-    // Also attempt window.open just in case
-    try {
-      window.open(telegramUrl, '_blank', 'noopener,noreferrer');
-    } catch {}
 
     // Complete order flow and display success confirmation modal with direct link & copy button
     onOrderCompleted(orderNumber, telegramUrl, orderText);
@@ -135,7 +130,8 @@ export const CartModal: React.FC<CartModalProps> = ({
             </div>
           ) : (
             cartItems.map((item) => {
-              const itemTotal = item.variant.price * item.quantity;
+              const itemPrice = item.variant?.price ?? 0;
+              const itemTotal = itemPrice * (item.quantity ?? 1);
               return (
                 <div key={item.id} className="py-3.5 first:pt-0 last:pb-0 flex items-center gap-3">
                   {/* Photo 50x50 */}
@@ -155,10 +151,10 @@ export const CartModal: React.FC<CartModalProps> = ({
                       {item.name}
                     </h4>
                     <p className="text-xs font-semibold uppercase tracking-wider text-[#7c3aed] truncate">
-                      {item.variant.name}
+                      {item.variant?.name || 'Стандарт'}
                     </p>
                     <p className="text-[11px] text-white/50 mt-0.5">
-                      {formatPrice(item.variant.price)} / шт.
+                      {formatPrice(itemPrice)} / шт.
                     </p>
                   </div>
 
