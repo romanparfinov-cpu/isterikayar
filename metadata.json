@@ -1,6 +1,6 @@
 {
   "name": "ISTERIKA - Вейп шоп",
-  "description": "Интернет-магазин вейп-продукции ISTERIKA в г. Ивье и г. Лида. Жидкости, POD-системы, испарители с удобным заказом.",
+  "description": "Интернет-магазин вейп-продукции ISTERIKA в г. Ивье. Жидкости, POD-системы, испарители и снюс с удобным заказом через Telegram.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

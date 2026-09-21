@@ -4,8 +4,8 @@ export function formatPrice(price: number): string {
   return `${Number(price || 0).toFixed(2)} BYN`;
 }
 
-export function generateOrderNumber(city: City): string {
-  const cityCode = city === 'Ивье' ? 'ИВЬЕ' : 'ЛИДА';
+export function generateOrderNumber(city?: City): string {
+  const cityCode = 'ИВЬЕ';
   const randomDigits = Math.floor(1000 + Math.random() * 9000);
   return `#${cityCode}-${randomDigits}`;
 }

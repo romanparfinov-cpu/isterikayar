@@ -37,7 +37,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   // Form states (Product)
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Category>('Жидкости');
-  const [city, setCity] = useState<ProductCity>('Оба');
+  const [city, setCity] = useState<ProductCity>('Ивье');
   const [price, setPrice] = useState<number>(15.00);
   const [imageUrl, setImageUrl] = useState('');
   const [variantsText, setVariantsText] = useState('');
@@ -121,25 +121,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
-  const handleMakeAllProductsBothCities = async () => {
-    setIsSubmitting(true);
-    try {
-      let count = 0;
-      for (const p of products) {
-        if (p.city !== 'Оба') {
-          await onSaveProduct({ ...p, city: 'Оба' }, p.id);
-          count++;
-        }
-      }
-      onShowToast(`Готово! Обновлено товаров: ${count}. Теперь они доступны для Ивья и Лиды.`, 'success');
-    } catch (e) {
-      console.error(e);
-      onShowToast('Ошибка при обновлении городов товаров', 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
     try {
@@ -164,7 +145,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setEditingId(null);
     setName('');
     setCategory('Жидкости');
-    setCity('Оба');
+    setCity('Ивье');
     setPrice(15.00);
     setBaseStock(10);
     setImageUrl('');
@@ -478,23 +459,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           {activeTab === 'list' && (
             <div className="space-y-4">
               <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-neutral-400">
-                    Всего товаров в базе: {products.length}
-                  </span>
-                  {products.some((p) => p.city !== 'Оба') && (
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={handleMakeAllProductsBothCities}
-                      className="py-1 px-2.5 rounded-lg bg-purple-950/50 hover:bg-purple-900/60 text-purple-300 border border-purple-700/50 text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                      title="Сделать все товары доступными и в Ивье, и в Лиде (чтобы они отображались для обоих городов)"
-                    >
-                      <span className="material-icons text-xs text-purple-300">all_inclusive</span>
-                      Включить все товары для обоих городов (Ивье + Лида)
-                    </button>
-                  )}
-                </div>
+                <span className="text-xs text-neutral-400">
+                  Всего товаров в базе (г. Ивье): {products.length}
+                </span>
                 <button
                   type="button"
                   onClick={openCreateForm}
@@ -627,18 +594,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
-                    Город наличия *
+                    Город наличия
                   </label>
-                  <select
-                    id="admin-select-city"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value as ProductCity)}
-                    className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#7c3aed]"
-                  >
-                    <option value="Оба">Оба города (Ивье и Лида) — Рекомендуется</option>
-                    <option value="Ивье">Только Ивье</option>
-                    <option value="Лида">Только Лида</option>
-                  </select>
+                  <div className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3 py-2.5 text-sm text-neutral-300 flex items-center gap-2">
+                    <span className="material-icons text-sm text-[#7c3aed]">location_on</span>
+                    <span>г. Ивье</span>
+                  </div>
                 </div>
 
                 <div>

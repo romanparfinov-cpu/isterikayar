@@ -97,24 +97,69 @@ export function saveLocalProducts(products: Product[]): void {
   }
 }
 
-// Products API (Real Firestore)
+// Products API (Real Firestore + Fast REST Fallback)
+export async function fetchProductsFromRest(): Promise<Product[]> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const url = 'https://firestore.googleapis.com/v1/projects/isterikaai/databases/(default)/documents/products';
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data.documents || !Array.isArray(data.documents)) return [];
+    
+    const list: Product[] = data.documents.map((d: any) => {
+      const fields = d.fields || {};
+      const parts = d.name.split('/');
+      const id = parts[parts.length - 1];
+      const p: any = { id };
+      for (const [k, v] of Object.entries<any>(fields)) {
+        if (v.stringValue !== undefined) p[k] = v.stringValue;
+        else if (v.integerValue !== undefined) p[k] = parseInt(v.integerValue, 10);
+        else if (v.doubleValue !== undefined) p[k] = parseFloat(v.doubleValue);
+        else if (v.booleanValue !== undefined) p[k] = v.booleanValue;
+        else if (v.mapValue !== undefined) {
+          p[k] = {};
+          for (const [mk, mv] of Object.entries<any>(v.mapValue.fields || {})) {
+            p[k][mk] = mv.stringValue ?? mv.integerValue ?? mv.booleanValue;
+          }
+        }
+      }
+      return p as Product;
+    });
+
+    list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return list;
+  } catch (err) {
+    console.warn('REST fetch fallback error:', err);
+    return [];
+  }
+}
+
 export function subscribeToProducts(callback: (products: Product[]) => void): () => void {
+  // 1. Immediately provide cached/initial products (zero-delay on any device/Safari)
+  const cached = getLocalProducts();
+  if (cached && cached.length > 0) {
+    callback(cached);
+  }
+
+  // 2. Fetch fresh data via fast REST API (bypasses Safari Incognito WebSocket blocking)
+  fetchProductsFromRest().then((restProds) => {
+    if (restProds && restProds.length > 0) {
+      saveLocalProducts(restProds);
+      callback(restProds);
+    }
+  }).catch(() => {});
+
   if (!db) {
-    callback(getLocalProducts());
     return () => {};
   }
 
+  // 3. Real-time subscription for live changes (admin edits, stock changes)
   const colRef = collection(db, 'products');
   const unsubscribe = onSnapshot(colRef, (snap) => {
     if (snap.empty) {
-      if (INITIAL_PRODUCTS.length > 0) {
-        // Only attempt to seed if INITIAL_PRODUCTS is not empty
-        for (const p of INITIAL_PRODUCTS) {
-          setDoc(doc(db!, 'products', p.id), p).catch(e => console.warn('Seeding product failed:', e));
-        }
-      }
-      saveLocalProducts(INITIAL_PRODUCTS);
-      callback(INITIAL_PRODUCTS);
       return;
     }
 
@@ -123,48 +168,45 @@ export function subscribeToProducts(callback: (products: Product[]) => void): ()
       list.push({ id: d.id, ...d.data() } as Product);
     });
     
-    // Optional: Sort products by createdAt or id to keep order stable
     list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
     saveLocalProducts(list);
     callback(list);
   }, (error) => {
-    console.warn('Firestore subscription failed, returning cached products:', error);
-    callback(getLocalProducts());
+    console.warn('Firestore subscription note (using cached/REST data):', error);
   });
 
   return unsubscribe;
 }
 
 export async function fetchProducts(): Promise<Product[]> {
+  // First attempt fast REST (works reliably across Safari Incognito, mobile networks)
+  try {
+    const restList = await fetchProductsFromRest();
+    if (restList && restList.length > 0) {
+      saveLocalProducts(restList);
+      return restList;
+    }
+  } catch {}
+
+  // Fallback to Firestore SDK
   if (db) {
     try {
       const colRef = collection(db, 'products');
       const snap = await getDocs(colRef);
-      if (snap.empty) {
-        // Seed initial products to cloud Firestore
-        for (const p of INITIAL_PRODUCTS) {
-          try {
-            await setDoc(doc(db, 'products', p.id), p);
-          } catch (e) {
-            console.warn('Seeding product failed:', e);
-          }
-        }
-        saveLocalProducts(INITIAL_PRODUCTS);
-        return INITIAL_PRODUCTS;
+      if (!snap.empty) {
+        const list: Product[] = [];
+        snap.forEach((d) => {
+          list.push({ id: d.id, ...d.data() } as Product);
+        });
+        list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        saveLocalProducts(list);
+        return list;
       }
-      const list: Product[] = [];
-      snap.forEach((d) => {
-        list.push({ id: d.id, ...d.data() } as Product);
-      });
-      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      saveLocalProducts(list);
-      return list;
     } catch (e) {
       console.warn('Firestore fetch failed, returning cached products:', e);
-      return getLocalProducts();
     }
   }
+
   return getLocalProducts();
 }
 

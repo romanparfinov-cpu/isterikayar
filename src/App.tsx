@@ -28,7 +28,6 @@ import {
 
 import { Header } from './components/Header';
 import { AgeVerificationModal } from './components/AgeVerificationModal';
-import { CityChangeModal } from './components/CityChangeModal';
 import { CategoryQuickNav } from './components/CategoryQuickNav';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailModal } from './components/ProductDetailModal';
@@ -41,7 +40,6 @@ import { ScrollToTop } from './components/ScrollToTop';
 import { Footer } from './components/Footer';
 
 const CART_STORAGE_KEY = 'isterika_cart_items';
-const CITY_STORAGE_KEY = 'isterika_selected_city';
 const AGE_STORAGE_KEY = 'isterika_age_verified';
 
 export default function App() {
@@ -49,13 +47,6 @@ export default function App() {
   const [ageVerified, setAgeVerified] = useState<boolean>(() => {
     return localStorage.getItem(AGE_STORAGE_KEY) === 'true';
   });
-
-  // Current City
-  const [currentCity, setCurrentCity] = useState<City>(() => {
-    const saved = localStorage.getItem(CITY_STORAGE_KEY);
-    return saved === 'Лида' ? 'Лида' : 'Ивье';
-  });
-  const [pendingCity, setPendingCity] = useState<City | null>(null);
 
   // Navigation & Category Tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('Главная');
@@ -207,11 +198,6 @@ export default function App() {
     }
   }, [cartItems]);
 
-  // 3. Persist City
-  useEffect(() => {
-    localStorage.setItem(CITY_STORAGE_KEY, currentCity);
-  }, [currentCity]);
-
   // Age Verification Handlers
   const handleAgeConfirm = () => {
     localStorage.setItem(AGE_STORAGE_KEY, 'true');
@@ -221,33 +207,6 @@ export default function App() {
 
   const handleAgeReject = () => {
     window.location.href = 'about:blank';
-  };
-
-  // City Switch Logic with confirmation modal
-  const handleRequestCityChange = (newCity: City) => {
-    if (newCity === currentCity) return;
-
-    if (cartItems.length > 0) {
-      // Show warning modal
-      setPendingCity(newCity);
-    } else {
-      // Directly switch if cart is empty
-      setCurrentCity(newCity);
-      showToast(`Город изменен на ${newCity}`, 'info');
-    }
-  };
-
-  const handleConfirmCityChange = () => {
-    if (pendingCity) {
-      setCartItems([]);
-      setCurrentCity(pendingCity);
-      showToast(`Город изменен на ${pendingCity}. Корзина очищена.`, 'info');
-      setPendingCity(null);
-    }
-  };
-
-  const handleCancelCityChange = () => {
-    setPendingCity(null);
   };
 
   // Cart Management
@@ -406,28 +365,15 @@ export default function App() {
     }
   };
 
-  // Filtered Products for selected city and active tab
-  const cityProducts = useMemo(() => {
-    return products.filter((p) => p.city === currentCity || p.city === 'Оба');
-  }, [products, currentCity]);
-
-  const ivyeCount = useMemo(() => {
-    return products.filter((p) => p.city === 'Ивье' || p.city === 'Оба').length;
-  }, [products]);
-
-  const lidaCount = useMemo(() => {
-    return products.filter((p) => p.city === 'Лида' || p.city === 'Оба').length;
-  }, [products]);
-
   const displayedProducts = useMemo(() => {
     if (activeTab === 'Главная') {
-      return cityProducts;
+      return products;
     }
     if (activeTab === 'Жидкости' || activeTab === 'POD-системы' || activeTab === 'Испарители' || activeTab === 'Снюс') {
-      return cityProducts.filter((p) => p.category === activeTab);
+      return products.filter((p) => p.category === activeTab);
     }
     return [];
-  }, [cityProducts, activeTab]);
+  }, [products, activeTab]);
 
   const totalCartCount = useMemo(() => {
     return cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -442,23 +388,12 @@ export default function App() {
         onReject={handleAgeReject}
       />
 
-      {/* City Change Warning Modal */}
-      <CityChangeModal
-        isOpen={!!pendingCity}
-        targetCity={pendingCity}
-        onConfirm={handleConfirmCityChange}
-        onCancel={handleCancelCityChange}
-      />
-
       {/* Main Header */}
       <Header
         activeTab={activeTab}
-        currentCity={currentCity}
-        cityCounts={{ ivye: ivyeCount, lida: lidaCount }}
         cartCount={totalCartCount}
         user={user}
         onTabChange={(tab) => setActiveTab(tab)}
-        onRequestCityChange={handleRequestCityChange}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenAdmin={() => setIsAdminOpen(true)}
         onLoginGoogle={handleLoginGoogle}
@@ -496,18 +431,18 @@ export default function App() {
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase italic tracking-tighter text-white">
                       {activeTab === 'Главная' ? (
                         <>
-                          Популярное в <span className="text-[#7c3aed] underline underline-offset-4 decoration-2">{currentCity}</span>
+                          Популярное в <span className="text-[#7c3aed]">г. Ивье</span>
                         </>
                       ) : (
                         <>
-                          {activeTab} в <span className="text-[#7c3aed] underline underline-offset-4 decoration-2">{currentCity}</span>
+                          {activeTab} в <span className="text-[#7c3aed]">г. Ивье</span>
                         </>
                       )}
                     </h1>
                     <span className="text-white/40 text-xs uppercase tracking-widest font-bold mt-2 block">
                       {displayedProducts.length > 0
                         ? `Показано ${displayedProducts.length} товаров в наличии`
-                        : 'В выбранном городе позиции не найдены'}
+                        : 'В наличии позиций пока нет'}
                     </span>
                   </div>
 
@@ -534,47 +469,15 @@ export default function App() {
                     </span>
                     <h3 className="text-lg sm:text-xl font-bold text-white">
                       {activeTab !== 'Главная'
-                        ? `В категории «${activeTab}» для города ${currentCity} позиций пока нет`
-                        : `В городе ${currentCity} позиции пока не добавлены`}
+                        ? `В категории «${activeTab}» позиций пока нет`
+                        : `Товары временно закончились`}
                     </h3>
                     <p className="text-xs sm:text-sm text-neutral-400 max-w-md mx-auto">
-                      {currentCity === 'Лида' && ivyeCount > 0 ? (
-                        <>
-                          В <strong className="text-white">г. Ивье</strong> сейчас в наличии{' '}
-                          <span className="text-[#7c3aed] font-bold">{ivyeCount} товаров</span>. Вы можете переключить город и посмотреть наличие!
-                        </>
-                      ) : currentCity === 'Ивье' && lidaCount > 0 ? (
-                        <>
-                          В <strong className="text-white">г. Лида</strong> сейчас в наличии{' '}
-                          <span className="text-[#7c3aed] font-bold">{lidaCount} товаров</span>. Вы можете переключить город и посмотреть наличие!
-                        </>
-                      ) : (
-                        <>Товары временно закончились или ожидается новая поставка.</>
-                      )}
+                      Ожидается новая поставка в г. Ивье. Следите за обновлениями или напишите нашему менеджеру в Telegram.
                     </p>
 
-                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                      {currentCity === 'Лида' && ivyeCount > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRequestCityChange('Ивье')}
-                          className="px-5 py-2.5 rounded-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-lg shadow-purple-950/50 cursor-pointer flex items-center gap-2"
-                        >
-                          <span className="material-icons text-sm">location_on</span>
-                          Показать товары в г. Ивье ({ivyeCount})
-                        </button>
-                      )}
-                      {currentCity === 'Ивье' && lidaCount > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRequestCityChange('Лида')}
-                          className="px-5 py-2.5 rounded-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-lg shadow-purple-950/50 cursor-pointer flex items-center gap-2"
-                        >
-                          <span className="material-icons text-sm">location_on</span>
-                          Показать товары в г. Лида ({lidaCount})
-                        </button>
-                      )}
-                      {activeTab !== 'Главная' && (
+                    {activeTab !== 'Главная' && (
+                      <div className="pt-2 flex justify-center">
                         <button
                           type="button"
                           onClick={() => setActiveTab('Главная')}
@@ -583,8 +486,8 @@ export default function App() {
                           <span className="material-icons text-sm">arrow_back</span>
                           Все категории
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div
@@ -618,7 +521,7 @@ export default function App() {
       {/* Cart Modal */}
       <CartModal
         isOpen={isCartOpen}
-        city={currentCity}
+        city="Ивье"
         cartItems={cartItems}
         telegramUsername={telegramUsername}
         onClose={() => setIsCartOpen(false)}

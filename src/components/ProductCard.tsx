@@ -60,15 +60,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <span className="text-[10px] sm:text-xs bg-[#7c3aed] text-white px-2 py-0.5 rounded uppercase font-bold tracking-tight shadow-md">
             {product.category}
           </span>
-          {product.city === 'Оба' ? (
-            <span className="text-[10px] sm:text-xs bg-white/10 backdrop-blur-md text-white px-2 py-0.5 rounded uppercase font-bold tracking-tight border border-white/10">
-              Ивье • Лида
-            </span>
-          ) : (
-            <span className="text-[10px] sm:text-xs bg-black/60 backdrop-blur-md text-neutral-300 px-2 py-0.5 rounded uppercase font-bold tracking-tight border border-white/10">
-              {product.city}
-            </span>
-          )}
         </div>
 
         {product.imageUrl ? (

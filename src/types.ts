@@ -1,5 +1,5 @@
-export type City = 'Ивье' | 'Лида';
-export type ProductCity = 'Ивье' | 'Лида' | 'Оба';
+export type City = 'Ивье';
+export type ProductCity = 'Ивье';
 
 export type Category = 'Жидкости' | 'POD-системы' | 'Испарители' | 'Снюс';
 export type ActiveTab = 'Главная' | 'Жидкости' | 'POD-системы' | 'Испарители' | 'Снюс' | 'Блог';
@@ -26,7 +26,7 @@ export interface Product {
   city: ProductCity;
   price: number;
   imageUrl: string;
-  variants: ProductVariant[];
+  variants?: ProductVariant[];
   characteristics: ProductCharacteristics;
   stock?: number;
   createdAt?: number;
