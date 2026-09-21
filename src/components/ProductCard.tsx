@@ -31,20 +31,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     : { name: 'Стандарт', price: product.price, stock: product.stock };
 
   const handleCardClick = () => {
-    if (hasVariants || isOutOfStock) {
-      onOpenDetail(product);
-    } else {
-      onQuickAdd(product, defaultVariant);
-    }
+    onOpenDetail(product);
   };
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (hasVariants || isOutOfStock) {
-      onOpenDetail(product);
-    } else {
-      onQuickAdd(product, defaultVariant);
-    }
+    onOpenDetail(product);
   };
 
   return (

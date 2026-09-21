@@ -97,6 +97,26 @@ export function saveLocalProducts(products: Product[]): void {
   }
 }
 
+function parseFirestoreValue(v: any): any {
+  if (v === undefined || v === null) return null;
+  if (v.stringValue !== undefined) return v.stringValue;
+  if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
+  if (v.doubleValue !== undefined) return parseFloat(v.doubleValue);
+  if (v.booleanValue !== undefined) return v.booleanValue;
+  if (v.timestampValue !== undefined) return v.timestampValue;
+  if (v.mapValue !== undefined) {
+    const obj: any = {};
+    for (const [mk, mv] of Object.entries<any>(v.mapValue.fields || {})) {
+      obj[mk] = parseFirestoreValue(mv);
+    }
+    return obj;
+  }
+  if (v.arrayValue !== undefined) {
+    return (v.arrayValue.values || []).map(parseFirestoreValue);
+  }
+  return null;
+}
+
 // Products API (Real Firestore + Fast REST Fallback)
 export async function fetchProductsFromRest(): Promise<Product[]> {
   try {
@@ -115,16 +135,7 @@ export async function fetchProductsFromRest(): Promise<Product[]> {
       const id = parts[parts.length - 1];
       const p: any = { id };
       for (const [k, v] of Object.entries<any>(fields)) {
-        if (v.stringValue !== undefined) p[k] = v.stringValue;
-        else if (v.integerValue !== undefined) p[k] = parseInt(v.integerValue, 10);
-        else if (v.doubleValue !== undefined) p[k] = parseFloat(v.doubleValue);
-        else if (v.booleanValue !== undefined) p[k] = v.booleanValue;
-        else if (v.mapValue !== undefined) {
-          p[k] = {};
-          for (const [mk, mv] of Object.entries<any>(v.mapValue.fields || {})) {
-            p[k][mk] = mv.stringValue ?? mv.integerValue ?? mv.booleanValue;
-          }
-        }
+        p[k] = parseFirestoreValue(v);
       }
       return p as Product;
     });
