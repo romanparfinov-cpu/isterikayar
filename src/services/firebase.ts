@@ -54,6 +54,16 @@ const DEFAULT_SETTINGS: AppSettings = {
   telegramUsername: 'isterikaMngr'
 };
 
+// Safe timeout wrapper for Firestore write operations to prevent infinite hanging
+async function withFirestoreTimeout<T>(operation: Promise<T>, timeoutMs = 3500): Promise<T> {
+  return Promise.race([
+    operation,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Firestore operation timed out after ${timeoutMs}ms`)), timeoutMs)
+    )
+  ]);
+}
+
 // Initialize Firebase
 let app: any = null;
 let auth: any = null;
@@ -232,9 +242,9 @@ export async function addProductToDB(productData: Omit<Product, 'id'>): Promise<
 
   if (db) {
     try {
-      await setDoc(doc(db, 'products', newId), newProduct);
+      await withFirestoreTimeout(setDoc(doc(db, 'products', newId), newProduct), 3000);
     } catch (e) {
-      console.warn('Firestore addDoc failed, storing locally:', e);
+      console.warn('Firestore addProduct failed or timed out, storing locally:', e);
     }
   }
 
@@ -247,9 +257,12 @@ export async function addProductToDB(productData: Omit<Product, 'id'>): Promise<
 export async function updateProductInDB(product: Product): Promise<void> {
   if (db) {
     try {
-      await updateDoc(doc(db, 'products', product.id), { ...product });
+      await withFirestoreTimeout(
+        setDoc(doc(db, 'products', product.id), { ...product }, { merge: true }),
+        3000
+      );
     } catch (e) {
-      console.warn('Firestore updateDoc failed:', e);
+      console.warn('Firestore updateProduct failed or timed out, storing locally:', e);
     }
   }
 
@@ -258,15 +271,17 @@ export async function updateProductInDB(product: Product): Promise<void> {
   if (index !== -1) {
     current[index] = product;
     saveLocalProducts([...current]);
+  } else {
+    saveLocalProducts([product, ...current]);
   }
 }
 
 export async function deleteProductFromDB(productId: string): Promise<void> {
   if (db) {
     try {
-      await deleteDoc(doc(db, 'products', productId));
+      await withFirestoreTimeout(deleteDoc(doc(db, 'products', productId)), 3000);
     } catch (e) {
-      console.warn('Firestore deleteDoc failed:', e);
+      console.warn('Firestore deleteProduct failed or timed out:', e);
     }
   }
 
@@ -326,9 +341,12 @@ export async function updateSettingsInDB(settings: AppSettings): Promise<void> {
 
   if (db) {
     try {
-      await setDoc(doc(db, 'settings', 'global'), settings, { merge: true });
+      await withFirestoreTimeout(
+        setDoc(doc(db, 'settings', 'global'), settings, { merge: true }),
+        3000
+      );
     } catch (e) {
-      console.warn('Firestore updateSettings failed:', e);
+      console.warn('Firestore updateSettings failed or timed out:', e);
     }
   }
   try {
@@ -388,9 +406,9 @@ export async function addOrderToDB(order: Omit<Order, 'id' | 'createdAt'>): Prom
 export async function deleteOrderFromDB(orderId: string): Promise<void> {
   if (db) {
     try {
-      await deleteDoc(doc(db, 'orders', orderId));
+      await withFirestoreTimeout(deleteDoc(doc(db, 'orders', orderId)), 3000);
     } catch (e) {
-      console.warn('Firestore deleteOrder failed:', e);
+      console.warn('Firestore deleteOrder failed or timed out:', e);
     }
   }
 
@@ -404,9 +422,12 @@ export async function deleteOrderFromDB(orderId: string): Promise<void> {
 export async function updateOrderStatusInDB(orderId: string, status: Order['status']): Promise<void> {
   if (db) {
     try {
-      await updateDoc(doc(db, 'orders', orderId), { status });
+      await withFirestoreTimeout(
+        setDoc(doc(db, 'orders', orderId), { status }, { merge: true }),
+        3000
+      );
     } catch (e) {
-      console.warn('Firestore updateOrderStatus failed:', e);
+      console.warn('Firestore updateOrderStatus failed or timed out:', e);
     }
   }
 
@@ -592,9 +613,9 @@ export async function addBlogPostToDB(post: Omit<BlogPost, 'id'>): Promise<BlogP
 
   if (db) {
     try {
-      await setDoc(doc(db, 'blog_posts', newId), newPost);
+      await withFirestoreTimeout(setDoc(doc(db, 'blog_posts', newId), newPost), 3000);
     } catch (e) {
-      console.warn('Firestore addBlogPost failed:', e);
+      console.warn('Firestore addBlogPost failed or timed out:', e);
     }
   }
 
@@ -609,9 +630,12 @@ export async function addBlogPostToDB(post: Omit<BlogPost, 'id'>): Promise<BlogP
 export async function updateBlogPostInDB(id: string, post: Partial<BlogPost>): Promise<void> {
   if (db) {
     try {
-      await updateDoc(doc(db, 'blog_posts', id), post);
+      await withFirestoreTimeout(
+        setDoc(doc(db, 'blog_posts', id), post, { merge: true }),
+        3000
+      );
     } catch (e) {
-      console.warn('Firestore updateBlogPost failed:', e);
+      console.warn('Firestore updateBlogPost failed or timed out:', e);
     }
   }
 
@@ -628,9 +652,9 @@ export async function updateBlogPostInDB(id: string, post: Partial<BlogPost>): P
 export async function deleteBlogPostFromDB(id: string): Promise<void> {
   if (db) {
     try {
-      await deleteDoc(doc(db, 'blog_posts', id));
+      await withFirestoreTimeout(deleteDoc(doc(db, 'blog_posts', id)), 3000);
     } catch (e) {
-      console.warn('Firestore deleteBlogPost failed:', e);
+      console.warn('Firestore deleteBlogPost failed or timed out:', e);
     }
   }
 
