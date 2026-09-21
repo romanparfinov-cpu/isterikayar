@@ -37,7 +37,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   // Form states (Product)
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Category>('Жидкости');
-  const [city, setCity] = useState<ProductCity>('Ивье');
+  const [city, setCity] = useState<ProductCity>('Оба');
   const [price, setPrice] = useState<number>(15.00);
   const [imageUrl, setImageUrl] = useState('');
   const [variantsText, setVariantsText] = useState('');
@@ -145,7 +145,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setEditingId(null);
     setName('');
     setCategory('Жидкости');
-    setCity('Ивье');
+    setCity('Оба');
     setPrice(15.00);
     setBaseStock(10);
     setImageUrl('');
@@ -458,9 +458,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {activeTab === 'list' && (
             <div className="space-y-4">
-              <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
+              <div className="flex justify-between items-center mb-2">
                 <span className="text-xs text-neutral-400">
-                  Всего товаров в базе (г. Ивье): {products.length}
+                  Всего товаров в базе: {products.length}
                 </span>
                 <button
                   type="button"
@@ -594,12 +594,18 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
-                    Город наличия
+                    Город наличия *
                   </label>
-                  <div className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3 py-2.5 text-sm text-neutral-300 flex items-center gap-2">
-                    <span className="material-icons text-sm text-[#7c3aed]">location_on</span>
-                    <span>г. Ивье</span>
-                  </div>
+                  <select
+                    id="admin-select-city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value as ProductCity)}
+                    className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#7c3aed]"
+                  >
+                    <option value="Ивье">Ивье</option>
+                    <option value="Лида">Лида</option>
+                    <option value="Оба">Оба (Ивье и Лида)</option>
+                  </select>
                 </div>
 
                 <div>

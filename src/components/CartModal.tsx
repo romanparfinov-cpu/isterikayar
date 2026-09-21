@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React from 'react';
 import { CartItem, City, Order } from '../types';
 import { formatPrice, generateOrderNumber, createTelegramOrderUrl } from '../utils/format';
 import { addOrderToDB } from '../services/firebase';
@@ -12,7 +12,7 @@ interface CartModalProps {
   onUpdateQuantity: (id: string, delta: number) => void;
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
-  onOrderCompleted: (orderNumber: string, telegramUrl?: string, orderText?: string) => void;
+  onOrderCompleted: (orderNumber: string) => void;
 }
 
 export const CartModal: React.FC<CartModalProps> = ({
@@ -28,48 +28,14 @@ export const CartModal: React.FC<CartModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const totalSum = cartItems.reduce((acc, item) => acc + (item.variant?.price ?? 0) * (item.quantity ?? 1), 0);
+  const totalSum = cartItems.reduce((acc, item) => acc + item.variant.price * item.quantity, 0);
 
-  const [orderNumber, setOrderNumber] = useState(() => generateOrderNumber(city));
+  const handleCheckoutTelegram = async () => {
+    if (cartItems.length === 0) return;
 
-  useEffect(() => {
-    if (isOpen) {
-      setOrderNumber(generateOrderNumber(city));
-    }
-  }, [isOpen, city]);
-
-  const orderItems = useMemo(() => {
-    return cartItems.map((item) => ({
-      name: item.name || 'Товар',
-      variantName: item.variant?.name || 'Стандарт',
-      quantity: item.quantity || 1,
-      price: item.variant?.price ?? 0,
-    }));
-  }, [cartItems]);
-
-  let cleanUsername = (telegramUsername || 'isterikaMngr').replace('@', '').trim();
-  const lower = cleanUsername.toLowerCase();
-  if (
-    !cleanUsername ||
-    lower === 'istermanager' ||
-    lower === 'istertelegram' ||
-    lower.includes('istermanager') ||
-    lower.includes('istertelegram')
-  ) {
-    cleanUsername = 'isterikaMngr';
-  }
-
-  const { url: telegramUrl, orderText } = useMemo(() => {
-    return createTelegramOrderUrl(orderNumber, city, orderItems, totalSum, cleanUsername);
-  }, [orderNumber, city, orderItems, totalSum, cleanUsername]);
-
-  const handleCheckoutTelegram = (e: React.MouseEvent) => {
-    if (cartItems.length === 0) {
-      e.preventDefault();
-      return;
-    }
-
-    // Save order to DB asynchronously in background
+    const orderNumber = generateOrderNumber(city);
+    
+    // Save to DB
     const newOrder: Omit<Order, 'id' | 'createdAt'> = {
       orderNumber,
       items: cartItems,
@@ -77,10 +43,28 @@ export const CartModal: React.FC<CartModalProps> = ({
       city,
       status: 'new',
     };
-    addOrderToDB(newOrder).catch((err) => console.warn('addOrderToDB warning:', err));
+    await addOrderToDB(newOrder);
 
-    // Complete order flow and display success confirmation modal with direct link & copy button
-    onOrderCompleted(orderNumber, telegramUrl, orderText);
+    const orderItems = cartItems.map(item => ({
+      name: item.name,
+      variantName: item.variant.name,
+      quantity: item.quantity,
+      price: item.variant.price,
+    }));
+
+    let cleanUsername = (telegramUsername || 'isterikaMngr').replace('@', '').trim();
+    const lower = cleanUsername.toLowerCase();
+    if (!cleanUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
+      cleanUsername = 'isterikaMngr';
+    }
+
+    const { url } = createTelegramOrderUrl(orderNumber, city, orderItems, totalSum, cleanUsername);
+
+    // Navigate in current window to ensure Telegram deep links work in Safari without popup blockers
+    window.location.href = url;
+
+    // Notify parent to show "Заказ отправлен! Корзина очищена" notification modal & clear cart
+    onOrderCompleted(orderNumber);
   };
 
   return (
@@ -130,8 +114,7 @@ export const CartModal: React.FC<CartModalProps> = ({
             </div>
           ) : (
             cartItems.map((item) => {
-              const itemPrice = item.variant?.price ?? 0;
-              const itemTotal = itemPrice * (item.quantity ?? 1);
+              const itemTotal = item.variant.price * item.quantity;
               return (
                 <div key={item.id} className="py-3.5 first:pt-0 last:pb-0 flex items-center gap-3">
                   {/* Photo 50x50 */}
@@ -151,10 +134,10 @@ export const CartModal: React.FC<CartModalProps> = ({
                       {item.name}
                     </h4>
                     <p className="text-xs font-semibold uppercase tracking-wider text-[#7c3aed] truncate">
-                      {item.variant?.name || 'Стандарт'}
+                      {item.variant.name}
                     </p>
                     <p className="text-[11px] text-white/50 mt-0.5">
-                      {formatPrice(itemPrice)} / шт.
+                      {formatPrice(item.variant.price)} / шт.
                     </p>
                   </div>
 
@@ -220,17 +203,15 @@ export const CartModal: React.FC<CartModalProps> = ({
                 <span className="material-icons text-base">delete_outline</span>
               </button>
               
-              <a
+              <button
                 id="cart-checkout-telegram-btn"
-                href={telegramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                type="button"
                 onClick={handleCheckoutTelegram}
-                className="flex-1 py-4 px-4 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold uppercase tracking-widest text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#7c3aed]/30 transition-all active:scale-[0.99] cursor-pointer no-underline text-center"
+                className="flex-1 py-4 px-4 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold uppercase tracking-widest text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#7c3aed]/30 transition-all active:scale-[0.99] cursor-pointer"
               >
                 <span className="material-icons text-lg">send</span>
                 Оформить заказ в Telegram
-              </a>
+              </button>
             </div>
             
             <p className="text-[10px] uppercase tracking-wider text-center text-white/40">

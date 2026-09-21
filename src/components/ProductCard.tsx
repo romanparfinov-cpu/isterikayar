@@ -31,12 +31,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     : { name: 'Стандарт', price: product.price, stock: product.stock };
 
   const handleCardClick = () => {
-    onOpenDetail(product);
+    if (hasVariants || isOutOfStock) {
+      onOpenDetail(product);
+    } else {
+      onQuickAdd(product, defaultVariant);
+    }
   };
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onOpenDetail(product);
+    if (hasVariants || isOutOfStock) {
+      onOpenDetail(product);
+    } else {
+      onQuickAdd(product, defaultVariant);
+    }
   };
 
   return (
@@ -52,6 +60,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <span className="text-[10px] sm:text-xs bg-[#7c3aed] text-white px-2 py-0.5 rounded uppercase font-bold tracking-tight shadow-md">
             {product.category}
           </span>
+          {product.city === 'Оба' ? (
+            <span className="text-[10px] sm:text-xs bg-white/10 backdrop-blur-md text-white px-2 py-0.5 rounded uppercase font-bold tracking-tight border border-white/10">
+              Ивье • Лида
+            </span>
+          ) : (
+            <span className="text-[10px] sm:text-xs bg-black/60 backdrop-blur-md text-neutral-300 px-2 py-0.5 rounded uppercase font-bold tracking-tight border border-white/10">
+              {product.city}
+            </span>
+          )}
         </div>
 
         {product.imageUrl ? (
@@ -79,7 +96,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <h3 className="font-bold text-base sm:text-lg text-white leading-snug group-hover:text-purple-300 transition-colors line-clamp-2">
             {product.name}
           </h3>
-          {product.characteristics?.nicotine && (
+          {product.characteristics.nicotine && (
             <p className="text-white/50 text-xs uppercase font-semibold tracking-wider mt-1 truncate">
               {product.characteristics.nicotine}
             </p>

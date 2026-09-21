@@ -23,9 +23,10 @@ export const Footer: React.FC<FooterProps> = ({ onShowToast, telegramUsername = 
                 ISTERIKA
               </span>
             </div>
-            <div className="flex items-center gap-1.5 pt-2 text-xs uppercase font-bold tracking-widest text-white/60">
-              <span className="material-icons text-sm text-[#7c3aed]">location_on</span>
+            <div className="flex items-center gap-3 pt-2 text-xs uppercase font-bold tracking-widest text-white/60">
               <span>г. Ивье</span>
+              <span>•</span>
+              <span>г. Лида</span>
             </div>
           </div>
 

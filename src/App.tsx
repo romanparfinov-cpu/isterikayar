@@ -28,6 +28,8 @@ import {
 
 import { Header } from './components/Header';
 import { AgeVerificationModal } from './components/AgeVerificationModal';
+import { CityChangeModal } from './components/CityChangeModal';
+import { CategoryQuickNav } from './components/CategoryQuickNav';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { CartModal } from './components/CartModal';
@@ -39,6 +41,7 @@ import { ScrollToTop } from './components/ScrollToTop';
 import { Footer } from './components/Footer';
 
 const CART_STORAGE_KEY = 'isterika_cart_items';
+const CITY_STORAGE_KEY = 'isterika_selected_city';
 const AGE_STORAGE_KEY = 'isterika_age_verified';
 
 export default function App() {
@@ -47,23 +50,27 @@ export default function App() {
     return localStorage.getItem(AGE_STORAGE_KEY) === 'true';
   });
 
+  // Current City
+  const [currentCity, setCurrentCity] = useState<City>(() => {
+    const saved = localStorage.getItem(CITY_STORAGE_KEY);
+    return saved === 'Лида' ? 'Лида' : 'Ивье';
+  });
+  const [pendingCity, setPendingCity] = useState<City | null>(null);
+
   // Navigation & Category Tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('Главная');
 
   // Products and Blog
-  const [products, setProducts] = useState<Product[]>(() => getLocalProducts());
+  const [products, setProducts] = useState<Product[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(() => getLocalProducts().length === 0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [telegramUsername, setTelegramUsername] = useState<string>('isterikaMngr');
 
   // Cart
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
-      if (!saved) return [];
-      const parsed = JSON.parse(saved);
-      if (!Array.isArray(parsed)) return [];
-      return parsed.filter((item: any) => item && item.id && item.variant);
+      return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
@@ -76,8 +83,6 @@ export default function App() {
   const [telegramOrderModal, setTelegramOrderModal] = useState<{
     isOpen: boolean;
     orderNumber: string;
-    telegramUrl?: string;
-    orderText?: string;
   }>({
     isOpen: false,
     orderNumber: '',
@@ -142,16 +147,12 @@ export default function App() {
           });
         };
 
-        const [settings, blogs, initialProducts] = await Promise.all([
+        const [settings, blogs] = await Promise.all([
           withTimeout(fetchSettings(), 5000, { telegramUsername: 'isterikaMngr' }),
-          withTimeout(fetchBlogPosts(), 5000, []),
-          withTimeout(fetchProducts(), 5000, getLocalProducts())
+          withTimeout(fetchBlogPosts(), 5000, [])
         ]);
 
         if (isMounted) {
-          if (initialProducts && initialProducts.length > 0) {
-            setProducts(initialProducts);
-          }
           setBlogPosts(blogs);
           if (settings && settings.telegramUsername) {
             const clean = settings.telegramUsername.replace('@', '').trim();
@@ -166,7 +167,8 @@ export default function App() {
           }
         }
       } catch (err) {
-        console.warn('Data sync note (using cached/fallback data):', err);
+        console.error('Failed to fetch data:', err);
+        showToast('Не удалось загрузить данные', 'error');
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -201,6 +203,11 @@ export default function App() {
     }
   }, [cartItems]);
 
+  // 3. Persist City
+  useEffect(() => {
+    localStorage.setItem(CITY_STORAGE_KEY, currentCity);
+  }, [currentCity]);
+
   // Age Verification Handlers
   const handleAgeConfirm = () => {
     localStorage.setItem(AGE_STORAGE_KEY, 'true');
@@ -210,6 +217,33 @@ export default function App() {
 
   const handleAgeReject = () => {
     window.location.href = 'about:blank';
+  };
+
+  // City Switch Logic with confirmation modal
+  const handleRequestCityChange = (newCity: City) => {
+    if (newCity === currentCity) return;
+
+    if (cartItems.length > 0) {
+      // Show warning modal
+      setPendingCity(newCity);
+    } else {
+      // Directly switch if cart is empty
+      setCurrentCity(newCity);
+      showToast(`Город изменен на ${newCity}`, 'info');
+    }
+  };
+
+  const handleConfirmCityChange = () => {
+    if (pendingCity) {
+      setCartItems([]);
+      setCurrentCity(pendingCity);
+      showToast(`Город изменен на ${pendingCity}. Корзина очищена.`, 'info');
+      setPendingCity(null);
+    }
+  };
+
+  const handleCancelCityChange = () => {
+    setPendingCity(null);
   };
 
   // Cart Management
@@ -283,18 +317,16 @@ export default function App() {
     showToast('Корзина очищена', 'info');
   };
 
-  const handleOrderCompleted = (orderNumber: string, telegramUrl?: string, orderText?: string) => {
+  const handleOrderCompleted = (orderNumber: string) => {
     setIsCartOpen(false);
     setTelegramOrderModal({
       isOpen: true,
       orderNumber,
-      telegramUrl,
-      orderText,
     });
   };
 
   const handleCloseTelegramOrderModal = () => {
-    setTelegramOrderModal({ isOpen: false, orderNumber: '', telegramUrl: '', orderText: '' });
+    setTelegramOrderModal({ isOpen: false, orderNumber: '' });
     setCartItems([]);
   };
 
@@ -370,15 +402,20 @@ export default function App() {
     }
   };
 
+  // Filtered Products for selected city and active tab
+  const cityProducts = useMemo(() => {
+    return products.filter((p) => p.city === currentCity || p.city === 'Оба');
+  }, [products, currentCity]);
+
   const displayedProducts = useMemo(() => {
     if (activeTab === 'Главная') {
-      return products;
+      return cityProducts;
     }
     if (activeTab === 'Жидкости' || activeTab === 'POD-системы' || activeTab === 'Испарители' || activeTab === 'Снюс') {
-      return products.filter((p) => p.category === activeTab);
+      return cityProducts.filter((p) => p.category === activeTab);
     }
     return [];
-  }, [products, activeTab]);
+  }, [cityProducts, activeTab]);
 
   const totalCartCount = useMemo(() => {
     return cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -393,12 +430,22 @@ export default function App() {
         onReject={handleAgeReject}
       />
 
+      {/* City Change Warning Modal */}
+      <CityChangeModal
+        isOpen={!!pendingCity}
+        targetCity={pendingCity}
+        onConfirm={handleConfirmCityChange}
+        onCancel={handleCancelCityChange}
+      />
+
       {/* Main Header */}
       <Header
         activeTab={activeTab}
+        currentCity={currentCity}
         cartCount={totalCartCount}
         user={user}
         onTabChange={(tab) => setActiveTab(tab)}
+        onRequestCityChange={handleRequestCityChange}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenAdmin={() => setIsAdminOpen(true)}
         onLoginGoogle={handleLoginGoogle}
@@ -420,24 +467,34 @@ export default function App() {
               <BlogSection posts={blogPosts} />
             ) : (
               <div>
+                {/* Home Page Category Navigation Tiles (only on Главная) */}
+                {activeTab === 'Главная' && (
+                  <CategoryQuickNav
+                    selectedCategory={null}
+                    onSelectCategory={(cat) => {
+                      if (cat) setActiveTab(cat);
+                    }}
+                  />
+                )}
+
                 {/* Section Header */}
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 pb-4 border-b border-white/10">
                   <div>
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase italic tracking-tighter text-white">
                       {activeTab === 'Главная' ? (
                         <>
-                          Популярное в <span className="text-[#7c3aed]">г. Ивье</span>
+                          Популярное в <span className="text-[#7c3aed] underline underline-offset-4 decoration-2">{currentCity}</span>
                         </>
                       ) : (
                         <>
-                          {activeTab} в <span className="text-[#7c3aed]">г. Ивье</span>
+                          {activeTab} в <span className="text-[#7c3aed] underline underline-offset-4 decoration-2">{currentCity}</span>
                         </>
                       )}
                     </h1>
                     <span className="text-white/40 text-xs uppercase tracking-widest font-bold mt-2 block">
                       {displayedProducts.length > 0
                         ? `Показано ${displayedProducts.length} товаров в наличии`
-                        : 'В наличии позиций пока нет'}
+                        : 'В выбранном городе позиции не найдены'}
                     </span>
                   </div>
 
@@ -445,10 +502,10 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('Главная')}
-                      className="text-xs uppercase font-bold tracking-widest text-[#7c3aed] hover:text-[#9061f9] flex items-center gap-1 cursor-pointer self-start sm:self-auto transition-colors"
+                      className="text-xs uppercase font-bold tracking-widest text-[#7c3aed] hover:text-[#9061f9] flex items-center gap-1 cursor-pointer self-start sm:self-auto"
                     >
                       <span className="material-icons text-sm">arrow_back</span>
-                      На главную
+                      Все категории
                     </button>
                   )}
                 </div>
@@ -457,32 +514,17 @@ export default function App() {
                 {displayedProducts.length === 0 ? (
                   <div
                     id="empty-products-placeholder"
-                    className="p-8 sm:p-14 text-center bg-[#141414] border border-[#222] rounded-2xl space-y-4"
+                    className="p-12 sm:p-16 text-center bg-[#141414] border border-[#222] rounded-2xl space-y-3"
                   >
                     <span className="material-icons text-5xl text-neutral-600">
                       inventory_2
                     </span>
-                    <h3 className="text-lg sm:text-xl font-bold text-white">
-                      {activeTab !== 'Главная'
-                        ? `В категории «${activeTab}» позиций пока нет`
-                        : `Товары временно закончились`}
+                    <h3 className="text-lg font-bold text-white">
+                      Товаров пока нет, загляните позже
                     </h3>
                     <p className="text-xs sm:text-sm text-neutral-400 max-w-md mx-auto">
-                      Ожидается новая поставка в г. Ивье. Следите за обновлениями или напишите нашему менеджеру в Telegram.
+                      В категории «{activeTab}» для города {currentCity} товары временно закончились или ожидается новая поставка.
                     </p>
-
-                    {activeTab !== 'Главная' && (
-                      <div className="pt-2 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('Главная')}
-                          className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
-                        >
-                          <span className="material-icons text-sm">arrow_back</span>
-                          Все категории
-                        </button>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div
@@ -516,7 +558,7 @@ export default function App() {
       {/* Cart Modal */}
       <CartModal
         isOpen={isCartOpen}
-        city="Ивье"
+        city={currentCity}
         cartItems={cartItems}
         telegramUsername={telegramUsername}
         onClose={() => setIsCartOpen(false)}
@@ -530,8 +572,6 @@ export default function App() {
       <TelegramOrderModal
         isOpen={telegramOrderModal.isOpen}
         orderNumber={telegramOrderModal.orderNumber}
-        telegramUrl={telegramOrderModal.telegramUrl}
-        orderText={telegramOrderModal.orderText}
         onClose={handleCloseTelegramOrderModal}
       />
 

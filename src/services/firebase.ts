@@ -30,19 +30,19 @@ import {
   getDownloadURL 
 } from 'firebase/storage';
 import { Product, AppUser, Order, AppSettings, BlogPost } from '../types';
-import firebaseAppletConfig from '../../firebase-applet-config.json';
 import { INITIAL_PRODUCTS, INITIAL_BLOG_POSTS } from '../data/initialProducts';
 
-// Configuration supporting both auto-provisioned config and custom environment variables
+// Configuration supporting both auto-provisioned config and custom Vercel environment variables
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey || "AIzaSyBevq3NApdPxvv4nY-rOTW-nQTPTTSpFjg",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain || "abstract-parser-n6shk.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId || "abstract-parser-n6shk",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket || "abstract-parser-n6shk.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId || "500286417908",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId || "1:500286417908:web:1d619e2a9420da94e467a1",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseAppletConfig.measurementId || "",
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || firebaseAppletConfig.firestoreDatabaseId || 'ai-studio-isterika-94f58454-06d4-4509-83e6-3eef6fe198cd'
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyByOxuteEKwId8W85KLLn_gStv5ObV2zWM",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "isterikaai.firebaseapp.com",
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://isterikaai-default-rtdb.firebaseio.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "isterikaai",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "isterikaai.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "285709727430",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:285709727430:web:05542c9dbc2470d4b309c7",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-9L6R6RMX2G",
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || '(default)'
 };
 
 export const ADMIN_EMAIL = 'romanparfinov@gmail.com';
@@ -125,81 +125,24 @@ export function saveLocalProducts(products: Product[]): void {
   }
 }
 
-function parseFirestoreValue(v: any): any {
-  if (v === undefined || v === null) return null;
-  if (v.stringValue !== undefined) return v.stringValue;
-  if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
-  if (v.doubleValue !== undefined) return parseFloat(v.doubleValue);
-  if (v.booleanValue !== undefined) return v.booleanValue;
-  if (v.timestampValue !== undefined) return v.timestampValue;
-  if (v.mapValue !== undefined) {
-    const obj: any = {};
-    for (const [mk, mv] of Object.entries<any>(v.mapValue.fields || {})) {
-      obj[mk] = parseFirestoreValue(mv);
-    }
-    return obj;
-  }
-  if (v.arrayValue !== undefined) {
-    return (v.arrayValue.values || []).map(parseFirestoreValue);
-  }
-  return null;
-}
-
-// Products API (Real Firestore + Fast REST Fallback)
-export async function fetchProductsFromRest(): Promise<Product[]> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-    const dbName = firebaseConfig.firestoreDatabaseId || '(default)';
-    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${dbName}/documents/products`;
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!data.documents || !Array.isArray(data.documents)) return [];
-    
-    const list: Product[] = data.documents.map((d: any) => {
-      const fields = d.fields || {};
-      const parts = d.name.split('/');
-      const id = parts[parts.length - 1];
-      const p: any = { id };
-      for (const [k, v] of Object.entries<any>(fields)) {
-        p[k] = parseFirestoreValue(v);
-      }
-      return p as Product;
-    });
-
-    list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    return list;
-  } catch (err) {
-    console.warn('REST fetch fallback error:', err);
-    return [];
-  }
-}
-
+// Products API (Real Firestore)
 export function subscribeToProducts(callback: (products: Product[]) => void): () => void {
-  // 1. Immediately provide cached/initial products (zero-delay on any device/Safari)
-  const cached = getLocalProducts();
-  if (cached && cached.length > 0) {
-    callback(cached);
-  }
-
-  // 2. Fetch fresh data via fast REST API (bypasses Safari Incognito WebSocket blocking)
-  fetchProductsFromRest().then((restProds) => {
-    if (restProds && restProds.length > 0) {
-      saveLocalProducts(restProds);
-      callback(restProds);
-    }
-  }).catch(() => {});
-
   if (!db) {
+    callback(getLocalProducts());
     return () => {};
   }
 
-  // 3. Real-time subscription for live changes (admin edits, stock changes)
   const colRef = collection(db, 'products');
   const unsubscribe = onSnapshot(colRef, (snap) => {
     if (snap.empty) {
+      if (INITIAL_PRODUCTS.length > 0) {
+        // Only attempt to seed if INITIAL_PRODUCTS is not empty
+        for (const p of INITIAL_PRODUCTS) {
+          setDoc(doc(db!, 'products', p.id), p).catch(e => console.warn('Seeding product failed:', e));
+        }
+      }
+      saveLocalProducts(INITIAL_PRODUCTS);
+      callback(INITIAL_PRODUCTS);
       return;
     }
 
@@ -208,45 +151,47 @@ export function subscribeToProducts(callback: (products: Product[]) => void): ()
       list.push({ id: d.id, ...d.data() } as Product);
     });
     
+    // Optional: Sort products by createdAt or id to keep order stable
     list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
     saveLocalProducts(list);
     callback(list);
   }, (error) => {
-    console.warn('Firestore subscription note (using cached/REST data):', error);
+    console.warn('Firestore subscription failed, returning cached products:', error);
+    callback(getLocalProducts());
   });
 
   return unsubscribe;
 }
 
 export async function fetchProducts(): Promise<Product[]> {
-  // First attempt fast REST (works reliably across Safari Incognito, mobile networks)
-  try {
-    const restList = await fetchProductsFromRest();
-    if (restList && restList.length > 0) {
-      saveLocalProducts(restList);
-      return restList;
-    }
-  } catch {}
-
-  // Fallback to Firestore SDK
   if (db) {
     try {
       const colRef = collection(db, 'products');
       const snap = await getDocs(colRef);
-      if (!snap.empty) {
-        const list: Product[] = [];
-        snap.forEach((d) => {
-          list.push({ id: d.id, ...d.data() } as Product);
-        });
-        list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        saveLocalProducts(list);
-        return list;
+      if (snap.empty) {
+        // Seed initial products to cloud Firestore
+        for (const p of INITIAL_PRODUCTS) {
+          try {
+            await setDoc(doc(db, 'products', p.id), p);
+          } catch (e) {
+            console.warn('Seeding product failed:', e);
+          }
+        }
+        saveLocalProducts(INITIAL_PRODUCTS);
+        return INITIAL_PRODUCTS;
       }
+      const list: Product[] = [];
+      snap.forEach((d) => {
+        list.push({ id: d.id, ...d.data() } as Product);
+      });
+      saveLocalProducts(list);
+      return list;
     } catch (e) {
       console.warn('Firestore fetch failed, returning cached products:', e);
+      return getLocalProducts();
     }
   }
-
   return getLocalProducts();
 }
 
@@ -413,9 +358,8 @@ export async function addOrderToDB(order: Omit<Order, 'id' | 'createdAt'>): Prom
   }
 
   try {
-    const raw = localStorage.getItem(STORAGE_ORDERS_KEY);
-    const current = raw ? JSON.parse(raw) : [];
-    const updated = [newOrder, ...(Array.isArray(current) ? current : [])];
+    const current = await fetchOrders();
+    const updated = [newOrder, ...current];
     localStorage.setItem(STORAGE_ORDERS_KEY, JSON.stringify(updated));
   } catch {}
   return newOrder;

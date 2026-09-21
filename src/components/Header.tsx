@@ -4,9 +4,11 @@ import { VapeIcon, CartridgeIcon, JuiceBottleIcon, SnusIcon } from './Icons';
 
 interface HeaderProps {
   activeTab: ActiveTab;
+  currentCity: City;
   cartCount: number;
   user: AppUser | null;
   onTabChange: (tab: ActiveTab) => void;
+  onRequestCityChange: (newCity: City) => void;
   onOpenCart: () => void;
   onOpenAdmin: () => void;
   onLoginGoogle: () => void;
@@ -15,9 +17,11 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
+  currentCity,
   cartCount,
   user,
   onTabChange,
+  onRequestCityChange,
   onOpenCart,
   onOpenAdmin,
   onLoginGoogle,
@@ -34,6 +38,13 @@ export const Header: React.FC<HeaderProps> = ({
     { label: 'Снюс', icon: <SnusIcon /> },
     { label: 'Блог', icon: <span className="material-icons">article</span> },
   ];
+
+  const handleCitySelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCity = e.target.value as City;
+    if (newCity !== currentCity) {
+      onRequestCityChange(newCity);
+    }
+  };
 
   return (
     <header
@@ -70,16 +81,20 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right: City Select, Cart, Auth, Admin */}
           <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
-            {/* Location Badge (г. Ивье) */}
-            <div
-              id="header-city-badge"
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg bg-[#1a1a1a] border border-white/20 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white shrink-0"
-              title="Магазин в г. Ивье"
-            >
-              <span className="material-icons text-[12px] sm:text-sm text-[#7c3aed]">
-                location_on
+            {/* City Selector */}
+            <div className="relative group shrink-0">
+              <select
+                id="header-city-select"
+                value={currentCity}
+                onChange={handleCitySelectChange}
+                className="bg-[#1a1a1a] border border-white/20 rounded-md sm:rounded-lg px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-sm font-bold uppercase tracking-wider text-white outline-none cursor-pointer hover:border-[#7c3aed] transition-colors appearance-none pr-5 sm:pr-8"
+              >
+                <option value="Ивье" className="bg-[#1a1a1a] text-white">г. Ивье</option>
+                <option value="Лида" className="bg-[#1a1a1a] text-white">г. Лида</option>
+              </select>
+              <span className="material-icons text-[14px] sm:text-xs text-white/50 absolute right-0.5 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                expand_more
               </span>
-              <span>г. Ивье</span>
             </div>
 
             {/* Admin Panel Button (if admin logged in) */}
