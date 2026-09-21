@@ -376,8 +376,9 @@ export async function addOrderToDB(order: Omit<Order, 'id' | 'createdAt'>): Prom
   }
 
   try {
-    const current = await fetchOrders();
-    const updated = [newOrder, ...current];
+    const raw = localStorage.getItem(STORAGE_ORDERS_KEY);
+    const current = raw ? JSON.parse(raw) : [];
+    const updated = [newOrder, ...(Array.isArray(current) ? current : [])];
     localStorage.setItem(STORAGE_ORDERS_KEY, JSON.stringify(updated));
   } catch {}
   return newOrder;

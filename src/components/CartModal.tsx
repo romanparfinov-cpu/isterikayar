@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CartItem, City, Order } from '../types';
 import { formatPrice, generateOrderNumber, createTelegramOrderUrl } from '../utils/format';
 import { addOrderToDB } from '../services/firebase';
@@ -12,7 +12,7 @@ interface CartModalProps {
   onUpdateQuantity: (id: string, delta: number) => void;
   onRemoveItem: (id: string) => void;
   onClearCart: () => void;
-  onOrderCompleted: (orderNumber: string) => void;
+  onOrderCompleted: (orderNumber: string, telegramUrl?: string, orderText?: string) => void;
 }
 
 export const CartModal: React.FC<CartModalProps> = ({
@@ -30,12 +30,46 @@ export const CartModal: React.FC<CartModalProps> = ({
 
   const totalSum = cartItems.reduce((acc, item) => acc + item.variant.price * item.quantity, 0);
 
-  const handleCheckoutTelegram = async () => {
-    if (cartItems.length === 0) return;
+  const [orderNumber, setOrderNumber] = useState(() => generateOrderNumber(city));
 
-    const orderNumber = generateOrderNumber(city);
-    
-    // Save to DB
+  useEffect(() => {
+    if (isOpen) {
+      setOrderNumber(generateOrderNumber(city));
+    }
+  }, [isOpen, city]);
+
+  const orderItems = useMemo(() => {
+    return cartItems.map((item) => ({
+      name: item.name,
+      variantName: item.variant.name,
+      quantity: item.quantity,
+      price: item.variant.price,
+    }));
+  }, [cartItems]);
+
+  let cleanUsername = (telegramUsername || 'isterikaMngr').replace('@', '').trim();
+  const lower = cleanUsername.toLowerCase();
+  if (
+    !cleanUsername ||
+    lower === 'istermanager' ||
+    lower === 'istertelegram' ||
+    lower.includes('istermanager') ||
+    lower.includes('istertelegram')
+  ) {
+    cleanUsername = 'isterikaMngr';
+  }
+
+  const { url: telegramUrl, orderText } = useMemo(() => {
+    return createTelegramOrderUrl(orderNumber, city, orderItems, totalSum, cleanUsername);
+  }, [orderNumber, city, orderItems, totalSum, cleanUsername]);
+
+  const handleCheckoutTelegram = (e: React.MouseEvent) => {
+    if (cartItems.length === 0) {
+      e.preventDefault();
+      return;
+    }
+
+    // Save order to DB asynchronously in background
     const newOrder: Omit<Order, 'id' | 'createdAt'> = {
       orderNumber,
       items: cartItems,
@@ -43,28 +77,15 @@ export const CartModal: React.FC<CartModalProps> = ({
       city,
       status: 'new',
     };
-    await addOrderToDB(newOrder);
+    addOrderToDB(newOrder).catch((err) => console.warn('addOrderToDB warning:', err));
 
-    const orderItems = cartItems.map(item => ({
-      name: item.name,
-      variantName: item.variant.name,
-      quantity: item.quantity,
-      price: item.variant.price,
-    }));
+    // Also attempt window.open just in case
+    try {
+      window.open(telegramUrl, '_blank', 'noopener,noreferrer');
+    } catch {}
 
-    let cleanUsername = (telegramUsername || 'isterikaMngr').replace('@', '').trim();
-    const lower = cleanUsername.toLowerCase();
-    if (!cleanUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
-      cleanUsername = 'isterikaMngr';
-    }
-
-    const { url } = createTelegramOrderUrl(orderNumber, city, orderItems, totalSum, cleanUsername);
-
-    // Navigate in current window to ensure Telegram deep links work in Safari without popup blockers
-    window.location.href = url;
-
-    // Notify parent to show "Заказ отправлен! Корзина очищена" notification modal & clear cart
-    onOrderCompleted(orderNumber);
+    // Complete order flow and display success confirmation modal with direct link & copy button
+    onOrderCompleted(orderNumber, telegramUrl, orderText);
   };
 
   return (
@@ -203,15 +224,17 @@ export const CartModal: React.FC<CartModalProps> = ({
                 <span className="material-icons text-base">delete_outline</span>
               </button>
               
-              <button
+              <a
                 id="cart-checkout-telegram-btn"
-                type="button"
+                href={telegramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={handleCheckoutTelegram}
-                className="flex-1 py-4 px-4 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold uppercase tracking-widest text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#7c3aed]/30 transition-all active:scale-[0.99] cursor-pointer"
+                className="flex-1 py-4 px-4 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold uppercase tracking-widest text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#7c3aed]/30 transition-all active:scale-[0.99] cursor-pointer no-underline text-center"
               >
                 <span className="material-icons text-lg">send</span>
                 Оформить заказ в Telegram
-              </button>
+              </a>
             </div>
             
             <p className="text-[10px] uppercase tracking-wider text-center text-white/40">

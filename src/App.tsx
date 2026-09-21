@@ -74,6 +74,8 @@ export default function App() {
   const [telegramOrderModal, setTelegramOrderModal] = useState<{
     isOpen: boolean;
     orderNumber: string;
+    telegramUrl?: string;
+    orderText?: string;
   }>({
     isOpen: false,
     orderNumber: '',
@@ -280,16 +282,18 @@ export default function App() {
     showToast('Корзина очищена', 'info');
   };
 
-  const handleOrderCompleted = (orderNumber: string) => {
+  const handleOrderCompleted = (orderNumber: string, telegramUrl?: string, orderText?: string) => {
     setIsCartOpen(false);
     setTelegramOrderModal({
       isOpen: true,
       orderNumber,
+      telegramUrl,
+      orderText,
     });
   };
 
   const handleCloseTelegramOrderModal = () => {
-    setTelegramOrderModal({ isOpen: false, orderNumber: '' });
+    setTelegramOrderModal({ isOpen: false, orderNumber: '', telegramUrl: '', orderText: '' });
     setCartItems([]);
   };
 
@@ -535,6 +539,8 @@ export default function App() {
       <TelegramOrderModal
         isOpen={telegramOrderModal.isOpen}
         orderNumber={telegramOrderModal.orderNumber}
+        telegramUrl={telegramOrderModal.telegramUrl}
+        orderText={telegramOrderModal.orderText}
         onClose={handleCloseTelegramOrderModal}
       />
 
