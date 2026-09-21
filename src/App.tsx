@@ -61,9 +61,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('Главная');
 
   // Products and Blog
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => getLocalProducts());
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => getLocalProducts().length === 0);
   const [telegramUsername, setTelegramUsername] = useState<string>('isterikaMngr');
 
   // Cart
@@ -147,12 +147,16 @@ export default function App() {
           });
         };
 
-        const [settings, blogs] = await Promise.all([
+        const [settings, blogs, initialProducts] = await Promise.all([
           withTimeout(fetchSettings(), 5000, { telegramUsername: 'isterikaMngr' }),
-          withTimeout(fetchBlogPosts(), 5000, [])
+          withTimeout(fetchBlogPosts(), 5000, []),
+          withTimeout(fetchProducts(), 5000, getLocalProducts())
         ]);
 
         if (isMounted) {
+          if (initialProducts && initialProducts.length > 0) {
+            setProducts(initialProducts);
+          }
           setBlogPosts(blogs);
           if (settings && settings.telegramUsername) {
             const clean = settings.telegramUsername.replace('@', '').trim();
@@ -407,6 +411,14 @@ export default function App() {
     return products.filter((p) => p.city === currentCity || p.city === 'Оба');
   }, [products, currentCity]);
 
+  const ivyeCount = useMemo(() => {
+    return products.filter((p) => p.city === 'Ивье' || p.city === 'Оба').length;
+  }, [products]);
+
+  const lidaCount = useMemo(() => {
+    return products.filter((p) => p.city === 'Лида' || p.city === 'Оба').length;
+  }, [products]);
+
   const displayedProducts = useMemo(() => {
     if (activeTab === 'Главная') {
       return cityProducts;
@@ -442,6 +454,7 @@ export default function App() {
       <Header
         activeTab={activeTab}
         currentCity={currentCity}
+        cityCounts={{ ivye: ivyeCount, lida: lidaCount }}
         cartCount={totalCartCount}
         user={user}
         onTabChange={(tab) => setActiveTab(tab)}
@@ -514,17 +527,64 @@ export default function App() {
                 {displayedProducts.length === 0 ? (
                   <div
                     id="empty-products-placeholder"
-                    className="p-12 sm:p-16 text-center bg-[#141414] border border-[#222] rounded-2xl space-y-3"
+                    className="p-8 sm:p-14 text-center bg-[#141414] border border-[#222] rounded-2xl space-y-4"
                   >
                     <span className="material-icons text-5xl text-neutral-600">
                       inventory_2
                     </span>
-                    <h3 className="text-lg font-bold text-white">
-                      Товаров пока нет, загляните позже
+                    <h3 className="text-lg sm:text-xl font-bold text-white">
+                      {activeTab !== 'Главная'
+                        ? `В категории «${activeTab}» для города ${currentCity} позиций пока нет`
+                        : `В городе ${currentCity} позиции пока не добавлены`}
                     </h3>
                     <p className="text-xs sm:text-sm text-neutral-400 max-w-md mx-auto">
-                      В категории «{activeTab}» для города {currentCity} товары временно закончились или ожидается новая поставка.
+                      {currentCity === 'Лида' && ivyeCount > 0 ? (
+                        <>
+                          В <strong className="text-white">г. Ивье</strong> сейчас в наличии{' '}
+                          <span className="text-[#7c3aed] font-bold">{ivyeCount} товаров</span>. Вы можете переключить город и посмотреть наличие!
+                        </>
+                      ) : currentCity === 'Ивье' && lidaCount > 0 ? (
+                        <>
+                          В <strong className="text-white">г. Лида</strong> сейчас в наличии{' '}
+                          <span className="text-[#7c3aed] font-bold">{lidaCount} товаров</span>. Вы можете переключить город и посмотреть наличие!
+                        </>
+                      ) : (
+                        <>Товары временно закончились или ожидается новая поставка.</>
+                      )}
                     </p>
+
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                      {currentCity === 'Лида' && ivyeCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRequestCityChange('Ивье')}
+                          className="px-5 py-2.5 rounded-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-lg shadow-purple-950/50 cursor-pointer flex items-center gap-2"
+                        >
+                          <span className="material-icons text-sm">location_on</span>
+                          Показать товары в г. Ивье ({ivyeCount})
+                        </button>
+                      )}
+                      {currentCity === 'Ивье' && lidaCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRequestCityChange('Лида')}
+                          className="px-5 py-2.5 rounded-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-lg shadow-purple-950/50 cursor-pointer flex items-center gap-2"
+                        >
+                          <span className="material-icons text-sm">location_on</span>
+                          Показать товары в г. Лида ({lidaCount})
+                        </button>
+                      )}
+                      {activeTab !== 'Главная' && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('Главная')}
+                          className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <span className="material-icons text-sm">arrow_back</span>
+                          Все категории
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div

@@ -5,6 +5,7 @@ import { VapeIcon, CartridgeIcon, JuiceBottleIcon, SnusIcon } from './Icons';
 interface HeaderProps {
   activeTab: ActiveTab;
   currentCity: City;
+  cityCounts?: { ivye: number; lida: number };
   cartCount: number;
   user: AppUser | null;
   onTabChange: (tab: ActiveTab) => void;
@@ -18,6 +19,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   currentCity,
+  cityCounts,
   cartCount,
   user,
   onTabChange,
@@ -89,8 +91,12 @@ export const Header: React.FC<HeaderProps> = ({
                 onChange={handleCitySelectChange}
                 className="bg-[#1a1a1a] border border-white/20 rounded-md sm:rounded-lg px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-sm font-bold uppercase tracking-wider text-white outline-none cursor-pointer hover:border-[#7c3aed] transition-colors appearance-none pr-5 sm:pr-8"
               >
-                <option value="Ивье" className="bg-[#1a1a1a] text-white">г. Ивье</option>
-                <option value="Лида" className="bg-[#1a1a1a] text-white">г. Лида</option>
+                <option value="Ивье" className="bg-[#1a1a1a] text-white">
+                  г. Ивье {cityCounts ? `(${cityCounts.ivye})` : ''}
+                </option>
+                <option value="Лида" className="bg-[#1a1a1a] text-white">
+                  г. Лида {cityCounts ? `(${cityCounts.lida})` : ''}
+                </option>
               </select>
               <span className="material-icons text-[14px] sm:text-xs text-white/50 absolute right-0.5 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none">
                 expand_more

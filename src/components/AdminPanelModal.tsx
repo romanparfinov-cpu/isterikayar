@@ -121,6 +121,25 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
+  const handleMakeAllProductsBothCities = async () => {
+    setIsSubmitting(true);
+    try {
+      let count = 0;
+      for (const p of products) {
+        if (p.city !== 'Оба') {
+          await onSaveProduct({ ...p, city: 'Оба' }, p.id);
+          count++;
+        }
+      }
+      onShowToast(`Готово! Обновлено товаров: ${count}. Теперь они доступны для Ивья и Лиды.`, 'success');
+    } catch (e) {
+      console.error(e);
+      onShowToast('Ошибка при обновлении городов товаров', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
     try {
@@ -458,10 +477,24 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {activeTab === 'list' && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-neutral-400">
-                  Всего товаров в базе: {products.length}
-                </span>
+              <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-neutral-400">
+                    Всего товаров в базе: {products.length}
+                  </span>
+                  {products.some((p) => p.city !== 'Оба') && (
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={handleMakeAllProductsBothCities}
+                      className="py-1 px-2.5 rounded-lg bg-purple-950/50 hover:bg-purple-900/60 text-purple-300 border border-purple-700/50 text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                      title="Сделать все товары доступными и в Ивье, и в Лиде (чтобы они отображались для обоих городов)"
+                    >
+                      <span className="material-icons text-xs text-purple-300">all_inclusive</span>
+                      Включить все товары для обоих городов (Ивье + Лида)
+                    </button>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={openCreateForm}
@@ -602,9 +635,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     onChange={(e) => setCity(e.target.value as ProductCity)}
                     className="w-full bg-[#1c1c1c] border border-[#2e2e2e] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#7c3aed]"
                   >
-                    <option value="Ивье">Ивье</option>
-                    <option value="Лида">Лида</option>
-                    <option value="Оба">Оба (Ивье и Лида)</option>
+                    <option value="Оба">Оба города (Ивье и Лида) — Рекомендуется</option>
+                    <option value="Ивье">Только Ивье</option>
+                    <option value="Лида">Только Лида</option>
                   </select>
                 </div>
 

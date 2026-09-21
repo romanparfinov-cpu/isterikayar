@@ -96,7 +96,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <h3 className="font-bold text-base sm:text-lg text-white leading-snug group-hover:text-purple-300 transition-colors line-clamp-2">
             {product.name}
           </h3>
-          {product.characteristics.nicotine && (
+          {product.characteristics?.nicotine && (
             <p className="text-white/50 text-xs uppercase font-semibold tracking-wider mt-1 truncate">
               {product.characteristics.nicotine}
             </p>

@@ -157,6 +157,7 @@ export async function fetchProducts(): Promise<Product[]> {
       snap.forEach((d) => {
         list.push({ id: d.id, ...d.data() } as Product);
       });
+      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       saveLocalProducts(list);
       return list;
     } catch (e) {
