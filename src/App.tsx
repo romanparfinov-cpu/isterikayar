@@ -53,7 +53,7 @@ export default function App() {
   // Current City
   const [currentCity, setCurrentCity] = useState<City>(() => {
     const saved = localStorage.getItem(CITY_STORAGE_KEY);
-    return saved === 'Лида' ? 'Лида' : 'Ивье';
+    return saved === 'Ошмяны' ? 'Ошмяны' : 'Ивье';
   });
   const [pendingCity, setPendingCity] = useState<City | null>(null);
 
