@@ -54,7 +54,7 @@ const STORAGE_SETTINGS_KEY = 'isterika_settings_v1';
 const STORAGE_BLOGS_KEY = 'isterika_blogs_v1';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  telegramUsername: 'isterikaMngr'
+  telegramUsername: 'isterikaManager'
 };
 
 // Safe timeout wrapper for Firestore write operations to prevent infinite hanging
@@ -284,7 +284,7 @@ export async function fetchSettings(): Promise<AppSettings> {
   const cleanUsername = (settings.telegramUsername || '').replace('@', '').trim();
   const lower = cleanUsername.toLowerCase();
   if (!cleanUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
-    settings.telegramUsername = 'isterikaMngr';
+    settings.telegramUsername = 'isterikaManager';
     try {
       localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings));
     } catch {}
@@ -297,7 +297,7 @@ export async function updateSettingsInDB(settings: AppSettings): Promise<void> {
   const cleanUsername = (settings.telegramUsername || '').replace('@', '').trim();
   const lower = cleanUsername.toLowerCase();
   if (!cleanUsername || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
-    settings.telegramUsername = 'isterikaMngr';
+    settings.telegramUsername = 'isterikaManager';
   } else {
     settings.telegramUsername = cleanUsername;
   }
