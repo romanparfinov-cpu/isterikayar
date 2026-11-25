@@ -17,16 +17,16 @@ export function createTelegramOrderUrl(
   total: number,
   telegramUsername: string = 'isterikaMngr'
 ): { url: string; orderText: string } {
-  let orderText = ` Новый заказ ${orderNumber}\n`;
-  orderText += ` Товары:\n`;
+  let orderText = `Номер заказа ${orderNumber}\n`;
+  orderText += `Товары:\n`;
 
   items.forEach((item, index) => {
     const itemTotal = (item.price * item.quantity).toFixed(2);
     orderText += `${index + 1}. ${item.name} (${item.variantName}) — ${item.quantity} шт. x ${item.price.toFixed(2)} BYN = ${itemTotal} BYN\n`;
   });
 
-  orderText += `\n Итого к оплате: ${total.toFixed(2)} BYN\n`;
-  orderText += ` Дата: ${new Date().toLocaleString('ru-RU')}`;
+  orderText += `\nИтого к оплате: ${total.toFixed(2)} BYN\n`;
+  orderText += `Дата: ${new Date().toLocaleString('ru-RU')}`;
 
   let cleanUsername = (telegramUsername || 'isterikaManager').replace('@', '').trim();
   const lower = cleanUsername.toLowerCase();
