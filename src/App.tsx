@@ -64,7 +64,7 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [telegramUsername, setTelegramUsername] = useState<string>('isterikaMngr');
+  const [telegramUsername, setTelegramUsername] = useState<string>('isterikaManager');
 
   // Cart
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -121,7 +121,7 @@ export default function App() {
         if (parsed.telegramUsername) {
           const clean = parsed.telegramUsername.toLowerCase().replace('@', '').trim();
           if (!clean || clean === 'istermanager' || clean === 'istertelegram' || clean.includes('istermanager') || clean.includes('istertelegram')) {
-            parsed.telegramUsername = 'isterikaMngr';
+            parsed.telegramUsername = 'isterikaManager';
             localStorage.setItem('isterika_settings_v1', JSON.stringify(parsed));
           }
         }
@@ -148,7 +148,7 @@ export default function App() {
         };
 
         const [settings, blogs] = await Promise.all([
-          withTimeout(fetchSettings(), 5000, { telegramUsername: 'isterikaMngr' }),
+          withTimeout(fetchSettings(), 5000, { telegramUsername: 'isterikaManager' }),
           withTimeout(fetchBlogPosts(), 5000, [])
         ]);
 
@@ -158,12 +158,12 @@ export default function App() {
             const clean = settings.telegramUsername.replace('@', '').trim();
             const lower = clean.toLowerCase();
             if (!clean || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
-              setTelegramUsername('isterikaMngr');
+              setTelegramUsername('isterikaManager');
             } else {
               setTelegramUsername(clean);
             }
           } else {
-            setTelegramUsername('isterikaMngr');
+            setTelegramUsername('isterikaManager');
           }
         }
       } catch (err) {
@@ -590,7 +590,7 @@ export default function App() {
           const clean = newUsername.replace('@', '').trim();
           const lower = clean.toLowerCase();
           if (!clean || lower === 'istermanager' || lower === 'istertelegram' || lower.includes('istermanager') || lower.includes('istertelegram')) {
-            setTelegramUsername('isterikaMngr');
+            setTelegramUsername('isterikaManager');
           } else {
             setTelegramUsername(clean);
           }
